@@ -256,8 +256,8 @@ tr.r-data:hover td{background:#fafaf8}
           </select>
         </div>
         <div class="fgi"><label>Semana *</label><input type="number" id="f-sem" min="1" max="52" placeholder="Ej: 26"></div>
-        <div class="fgi"><label>Fecha inicio *</label><input type="date" id="f-ini"></div>
-        <div class="fgi"><label>Fecha fin *</label><input type="date" id="f-fin"></div>
+        <div class="fgi"><label>Fecha inicio *</label><input type="date" id="f-ini" onchange="calcularSemana()"></div>
+        <div class="fgi"><label>Fecha fin *</label><input type="date" id="f-fin" onchange="calcularSemana()"></div>
         <div class="fgi"><label>Estado</label>
           <select id="f-est"><option>Sin Empezar</option><option>En Proceso</option><option>Completado</option><option>Atrasado</option></select>
         </div>
@@ -1005,6 +1005,18 @@ function abrirFormNueva(){
   document.getElementById('f-err').style.display='none';
   document.getElementById('ov-form').classList.add('active');
 }
+function calcularSemana(){
+  const ini = document.getElementById('f-ini').value;
+  if(!ini) return;
+  // Semana ISO del año
+  const d = new Date(ini);
+  const startOfYear = new Date(d.getFullYear(), 0, 1);
+  const diff = d - startOfYear;
+  const oneWeek = 1000*60*60*24*7;
+  const weekNum = Math.ceil((diff / oneWeek) + startOfYear.getDay() / 7);
+  document.getElementById('f-sem').value = weekNum;
+}
+
 async function guardarAct(){
   const act=document.getElementById('f-act').value.trim();
   const resp=document.getElementById('f-resp').value;
