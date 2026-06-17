@@ -339,22 +339,22 @@ tr.r-data:hover td{background:#fafaf8}
 const SUPA_URL = 'https://hfvyqrqebvndqthkjwjn.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhmdnlxcnFlYnZuZHF0aGtqd2puIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3NDA3MDMsImV4cCI6MjA5NTMxNjcwM30.T7_CVx5NpPBtNt1rsDDAzq0DtxiiNf1xKOPZAkHPorU';
 
-async function supaFetch(path, options={}){
-  const res = await fetch(SUPA_URL + '/rest/v1/' + path, {
-    headers: {
-      'apikey': SUPA_KEY,
-      'Authorization': 'Bearer ' + SUPA_KEY,
-      'Content-Type': 'application/json',
-      'Prefer': options.prefer || 'return=representation',
-      ...options.headers
-    },
-    ...options
-  });
+async function supaFetch(path, method, body, prefer){
+  const headers = {
+    'apikey': SUPA_KEY,
+    'Authorization': 'Bearer ' + SUPA_KEY,
+    'Content-Type': 'application/json'
+  };
+  if(prefer) headers['Prefer'] = prefer;
+  const opts = {method: method||'GET', headers};
+  if(body) opts.body = typeof body==='string' ? body : JSON.stringify(body);
+  const res = await fetch(SUPA_URL + '/rest/v1/' + path, opts);
   if(!res.ok){
     const err = await res.text();
     throw new Error('Supabase error: ' + err);
   }
-  return res.json().catch(()=>({}));
+  const text = await res.text();
+  return text ? JSON.parse(text) : {};
 }
 
 // ── DATOS ─────────────────────────────────────────────────────────────────────
@@ -928,7 +928,7 @@ async function eliminarAct(id){
   if(vistaActual==='semana') reabrirSems(abiertas);
   toast('Eliminando...');
   try{
-    await supaFetch('actividades?id=eq.'+id,{method:'DELETE',headers:{'Prefer':'return=minimal'}});
+    await supaFetch('actividades?id=eq.'+id, 'DELETE', null, 'return=minimal');
     toast('Actividad eliminada ✓');
   }catch(e){toast('⚠️ Error: '+e.message);}
 }
@@ -1021,12 +1021,18 @@ async function guardarAct(){
   if(!ini||!fin){err.textContent='Ingresa las fechas de inicio y fin.';err.style.display='block';return;}
   err.style.display='none';
   const notas=nota?[{fecha:new Date().toLocaleDateString('es-CO',{day:'2-digit',month:'short',year:'numeric'}),txt:nota}]:[];
-  data.push({id:nextId++,sem,act,resp,ini,fin,av,est,notas});
-  data.sort((a,b)=>b.sem-a.sem||b.ini.localeCompare(a.ini));
   cerrar('ov-form');
-  poblarFiltros();
-  applyFilters();renderCharts();
-  toast('Actividad agregada ✓');
+  toast('Guardando...');
+  try{
+    const res = await supaFetch('actividades', 'POST', [{sem,act,resp,ini,fin,av,est,notas}], 'return=representation');
+    const nueva = Array.isArray(res)?res[0]:res;
+    data.push({id:nueva.id,sem,act,resp,ini,fin,av,est,notas});
+    data.sort((a,b)=>b.sem-a.sem||b.ini.localeCompare(a.ini));
+    nextId = Math.max(...data.map(r=>r.id))+1;
+    poblarFiltros();
+    applyFilters();renderCharts();
+    toast('Actividad agregada ✓');
+  }catch(e){ toast('⚠️ Error al guardar: '+e.message); }
 }
 
 // ── GUARDAR EN HTML ───────────────────────────────────────────────────────────
@@ -1086,7 +1092,7 @@ function showError(msg){
 async function cargarDatos(){
   showLoading('Conectando con Supabase...');
   try{
-    const rows = await supaFetch('actividades?order=sem.desc,ini.desc&limit=1000');
+    const rows = await supaFetch('actividades?order=sem.desc,ini.desc&limit=1000', 'GET');
     if(rows.length > 0){
       data = rows.map(r=>({
         id: r.id,
@@ -1121,11 +1127,11 @@ async function subirDatosBase(){
       sem:r.sem, act:r.act, resp:r.resp, ini:r.ini, fin:r.fin,
       av:r.av, est:r.est, notas:r.notas||[]
     }));
-    await supaFetch('actividades', {method:'POST', body:JSON.stringify(chunk), prefer:'return=representation'});
+    await supaFetch('actividades', 'POST', chunk, 'return=representation');
     showLoading(`Subiendo actividades... ${Math.min(i+batch,data.length)}/${data.length}`);
   }
   // Reload
-  const rows = await supaFetch('actividades?order=sem.desc,ini.desc&limit=1000');
+  const rows = await supaFetch('actividades?order=sem.desc,ini.desc&limit=1000', 'GET');
   data = rows.map(r=>({id:r.id,sem:r.sem,act:r.act,resp:r.resp,ini:r.ini,fin:r.fin,av:parseFloat(r.av)||0,est:r.est||'',notas:r.notas||[]}));
   nextId = Math.max(...data.map(r=>r.id)) + 1;
 }
@@ -1144,24 +1150,19 @@ function initUI(){
 
 // ── GUARDAR EN SUPABASE (reemplaza guardarHTML) ───────────────────────────────
 async function guardarHTML(){
-  // Update all changed data to Supabase
-  toast('Guardando...');
+  toast('Sincronizando...');
   try{
-    // Upsert all records
-    const payload = data.map(r=>({
-      id: typeof r.id==='number' && r.id < 100000 ? r.id : undefined,
-      sem:r.sem, act:r.act, resp:r.resp, ini:r.ini, fin:r.fin,
-      av:r.av, est:r.est, notas:r.notas||[]
-    }));
-    await supaFetch('actividades', {
-      method:'POST',
-      body:JSON.stringify(payload),
-      headers:{'Prefer':'resolution=merge-duplicates,return=minimal'}
-    });
-    toast('✓ Guardado en Supabase');
+    // Update each record individually
+    let ok=0;
+    for(const r of data){
+      if(!r.id) continue;
+      await supaFetch('actividades?id=eq.'+r.id, 'PATCH', {sem:r.sem,act:r.act,resp:r.resp,ini:r.ini,fin:r.fin,av:r.av,est:r.est,notas:r.notas||[]}, 'return=minimal');
+      ok++;
+    }
+    toast('✓ Sincronizado ('+ok+' actividades)');
   } catch(e){
     console.error(e);
-    toast('⚠️ Error al guardar: ' + e.message);
+    toast('⚠️ Error: ' + e.message);
   }
 }
 
@@ -1170,11 +1171,7 @@ async function guardarCambio(id){
   const r=data.find(r=>r.id===id);
   if(!r) return;
   try{
-    await supaFetch(`actividades?id=eq.${id}`, {
-      method:'PATCH',
-      body:JSON.stringify({sem:r.sem,act:r.act,resp:r.resp,ini:r.ini,fin:r.fin,av:r.av,est:r.est,notas:r.notas||[]}),
-      headers:{'Prefer':'return=minimal'}
-    });
+    await supaFetch('actividades?id=eq.'+id, 'PATCH', {sem:r.sem,act:r.act,resp:r.resp,ini:r.ini,fin:r.fin,av:r.av,est:r.est,notas:r.notas||[]}, 'return=minimal');
   } catch(e){ console.error('Error saving:', e); toast('⚠️ Error al guardar cambio'); }
 }
 
