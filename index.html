@@ -1113,6 +1113,21 @@ async function cargarDatos(){
       await subirDatosBase();
     }
     initUI();
+    // Auto-refresh cada 30 segundos
+    setInterval(async()=>{
+      try{
+        const rows = await supaFetch('actividades?order=sem.desc,ini.desc&limit=1000', 'GET');
+        if(rows.length > 0){
+          const abiertas=getSemsAbiertas();
+          const abiertosM=getMesesAbiertos();
+          data = rows.map(r=>({id:r.id,sem:r.sem,act:r.act,resp:r.resp,ini:r.ini,fin:r.fin,av:parseFloat(r.av)||0,est:r.est||'',notas:r.notas||[]}));
+          applyFilters();
+          renderCharts();
+          if(vistaActual==='semana') reabrirSems(abiertas);
+          if(vistaActual==='mes') reabrirMeses(abiertosM);
+        }
+      }catch(e){ console.log('Auto-refresh error:', e.message); }
+    }, 30000);
   } catch(e){
     console.error(e);
     showError('No se pudo conectar a Supabase. Verifica tu conexión.<br><small>' + e.message + '</small>');
