@@ -163,8 +163,8 @@ tr.r-data:hover td{background:#fafaf8}
 .nota-txt{font-size:12px;color:#1a1a1a}
 .p-foot{display:flex;gap:8px;flex-wrap:wrap;padding:.9rem 1.25rem;border-top:1px solid #f0efea;align-items:center}
 
-.refresh-banner{display:none;position:fixed;top:0;left:0;right:0;background:#185fa5;color:#fff;text-align:center;padding:10px 16px;font-size:13px;font-weight:500;z-index:300;align-items:center;justify-content:center;gap:12px}
-.refresh-banner.show{display:flex}
+.version-banner{display:none;position:fixed;top:0;left:0;right:0;background:#534AB7;color:#fff;text-align:center;padding:10px 16px;font-size:13px;font-weight:500;z-index:300;align-items:center;justify-content:center;gap:12px}
+.version-banner.show{display:flex}
 .toast{position:fixed;bottom:1.5rem;right:1.5rem;background:#1D9E75;color:#fff;padding:9px 16px;border-radius:10px;font-size:13px;font-weight:500;z-index:200;opacity:0;transition:opacity .3s;pointer-events:none}
 .toast.show{opacity:1}
 .footer{margin-top:1.5rem;text-align:center;font-size:12px;color:#b4b2a9;padding-bottom:1rem}
@@ -184,7 +184,7 @@ tr.r-data:hover td{background:#fafaf8}
         <p>Cronograma de actividades · Semanas 2–26 · Enero–Junio 2026</p>
       </div>
     </div>
-    <span class="badge" id="badge-semana">Semana actual: —</span>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px"><span class="badge" id="badge-semana">Semana actual: —</span><span style="font-size:10px;color:#9b9b98" id="badge-version">v1.0</span></div>
   </div>
 </div>
 
@@ -306,10 +306,9 @@ tr.r-data:hover td{background:#fafaf8}
   </div>
 </div>
 
-<div class="refresh-banner" id="refresh-banner">
-  🔄 Hay cambios nuevos disponibles —
-  <button onclick="location.reload()" style="background:#fff;color:#185fa5;border:none;border-radius:6px;padding:4px 12px;font-size:12px;font-weight:600;cursor:pointer;margin-left:4px">Recargar página</button>
-  <button onclick="document.getElementById('refresh-banner').classList.remove('show')" style="background:none;border:none;color:#fff;cursor:pointer;font-size:16px;margin-left:8px;opacity:.7">✕</button>
+<div class="version-banner" id="version-banner">
+  🆕 Hay una nueva versión de la app disponible —
+  <button onclick="location.reload()" style="background:#fff;color:#534AB7;border:none;border-radius:6px;padding:4px 12px;font-size:12px;font-weight:600;cursor:pointer;margin-left:4px">Recargar página</button>
 </div>
 <div class="toast" id="toast"></div>
 
@@ -341,6 +340,9 @@ tr.r-data:hover td{background:#fafaf8}
 </div>
 
 <script>
+
+// ── VERSIÓN ───────────────────────────────────────────────────────────────────
+const APP_VERSION = '1.0';
 
 // ── SUPABASE CONFIG ──────────────────────────────────────────────────────────
 const SUPA_URL = 'https://hfvyqrqebvndqthkjwjn.supabase.co';
@@ -1136,27 +1138,17 @@ async function cargarDatos(){
     }
     initUI();
     // Auto-refresh cada 30 segundos
-    // Guardar hash de los datos para detectar cambios
-let lastDataHash = JSON.stringify(data.map(r=>r.id+r.est+r.av+r.notas.length));
-
-setInterval(async()=>{
+    setInterval(async()=>{
       try{
         const rows = await supaFetch('actividades?order=sem.desc,ini.desc&limit=1000', 'GET');
         if(rows.length > 0){
-          const newHash = JSON.stringify(rows.map(r=>r.id+r.est+r.av+(r.notas||[]).length));
-          if(newHash !== lastDataHash){
-            lastDataHash = newHash;
-            const abiertas=getSemsAbiertas();
-            const abiertosM=getMesesAbiertos();
-            data = rows.map(r=>({id:r.id,sem:r.sem,act:r.act,resp:r.resp,ini:r.ini,fin:r.fin,av:parseFloat(r.av)||0,est:r.est||'',notas:r.notas||[]}));
-            applyFilters();
-            renderCharts();
-            if(vistaActual==='semana') reabrirSems(abiertas);
-            if(vistaActual==='mes') reabrirMeses(abiertosM);
-            // Mostrar banner si los cambios fueron hechos por otro usuario
-            document.getElementById('refresh-banner').classList.add('show');
-            setTimeout(()=>document.getElementById('refresh-banner').classList.remove('show'), 8000);
-          }
+          const abiertas=getSemsAbiertas();
+          const abiertosM=getMesesAbiertos();
+          data = rows.map(r=>({id:r.id,sem:r.sem,act:r.act,resp:r.resp,ini:r.ini,fin:r.fin,av:parseFloat(r.av)||0,est:r.est||'',notas:r.notas||[]}));
+          applyFilters();
+          renderCharts();
+          if(vistaActual==='semana') reabrirSems(abiertas);
+          if(vistaActual==='mes') reabrirMeses(abiertosM);
         }
       }catch(e){ console.log('Auto-refresh error:', e.message); }
     }, 30000);
@@ -1191,7 +1183,18 @@ function initUI(){
   const semActual = Math.min(26, Math.max(2, 2 + Math.floor(diffDays/7)));
   const el = document.getElementById('badge-semana');
   if(el) el.textContent = 'Semana actual: ' + semActual;
+  const vEl = document.getElementById('badge-version');
+  if(vEl) vEl.textContent = 'v' + APP_VERSION;
   poblarFiltros();
+  // Verificar versión guardada en localStorage
+  try{
+    const savedVersion = localStorage.getItem('app_version');
+    if(savedVersion && savedVersion !== APP_VERSION){
+      document.getElementById('version-banner').classList.add('show');
+    }
+    localStorage.setItem('app_version', APP_VERSION);
+  }catch(e){}
+
   ['fil-est','fil-resp','fil-sem','fil-mes','fil-bus'].forEach(id=>{
     document.getElementById(id).addEventListener('input',applyFilters);
     document.getElementById(id).addEventListener('change',applyFilters);
