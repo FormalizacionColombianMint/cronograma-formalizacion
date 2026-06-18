@@ -182,7 +182,7 @@ tr.r-data:hover td{background:#fafaf8}
         <p>Cronograma de actividades · Semanas 2–26 · Enero–Junio 2026</p>
       </div>
     </div>
-    <span class="badge">Semana actual: 25</span>
+    <span class="badge" id="badge-semana">Semana actual: —</span>
   </div>
 </div>
 
@@ -740,13 +740,12 @@ function renderPorSemana(d){
   const container=document.getElementById('vista-container');
   if(!sems.length){container.innerHTML='<p style="text-align:center;padding:2rem;color:#9b9b98;font-size:13px">No hay actividades que coincidan.</p>';document.getElementById('tbl-info').textContent='';return;}
   const semDates={
-    2:'1–7 ene',3:'8–14 ene',4:'15–21 ene',5:'22–28 ene',
-    6:'29 ene–4 feb',7:'5–11 feb',8:'12–18 feb',9:'19–25 feb',
-    10:'26 feb–4 mar',11:'5–11 mar',12:'12–18 mar',13:'19–25 mar',
-    14:'26 mar–1 abr',15:'2–8 abr',16:'9–15 abr',17:'16–22 abr',
-    18:'23–29 abr',19:'30 abr–6 may',20:'7–13 may',21:'14–20 may',
-    22:'21–27 may',23:'28 may–3 jun',24:'4–10 jun',25:'11–17 jun',26:'18–24 jun'
-  };
+    2:'5–11 ene',3:'12–18 ene',4:'19–25 ene',5:'26 ene–1 feb',
+    6:'2–8 feb',7:'9–15 feb',8:'16–22 feb',9:'23 feb–1 mar',
+    10:'2–8 mar',11:'9–15 mar',12:'16–22 mar',13:'23–29 mar',
+    14:'30 mar–5 abr',15:'6–12 abr',16:'13–19 abr',17:'20–26 abr',
+    18:'27 abr–3 may',19:'4–10 may',20:'11–17 may',21:'18–24 may',
+    22:'25–31 may',23:'1–7 jun',24:'8–14 jun',25:'15–21 jun',26:'22–28 jun'};
   container.innerHTML=sems.map(s=>{
     const rows=d.filter(r=>r.sem===s);
     const m=calcM(rows);
@@ -1168,6 +1167,13 @@ async function subirDatosBase(){
 }
 
 function initUI(){
+  // Calcular semana actual dinamicamente
+  const hoy = new Date();
+  const inicioSem2 = new Date('2026-01-05');
+  const diffDays = Math.floor((hoy - inicioSem2) / (1000*60*60*24));
+  const semActual = Math.min(26, Math.max(2, 2 + Math.floor(diffDays/7)));
+  const el = document.getElementById('badge-semana');
+  if(el) el.textContent = 'Semana actual: ' + semActual;
   poblarFiltros();
   ['fil-est','fil-resp','fil-sem','fil-mes','fil-bus'].forEach(id=>{
     document.getElementById(id).addEventListener('input',applyFilters);
@@ -1239,7 +1245,7 @@ function generarPDF(){
   const soloAtrProc=document.getElementById('rep-atrasadas').checked;
 
   const m=calcM(data);
-  const semDates={2:'1–7 ene',3:'8–14 ene',4:'15–21 ene',5:'22–28 ene',6:'29 ene–4 feb',7:'5–11 feb',8:'12–18 feb',9:'19–25 feb',10:'26 feb–4 mar',11:'5–11 mar',12:'12–18 mar',13:'19–25 mar',14:'26 mar–1 abr',15:'2–8 abr',16:'9–15 abr',17:'16–22 abr',18:'23–29 abr',19:'30 abr–6 may',20:'7–13 may',21:'14–20 may',22:'21–27 may',23:'28 may–3 jun',24:'4–10 jun',25:'11–17 jun',26:'18–24 jun'};
+  const semDates={2:'5–11 ene',3:'12–18 ene',4:'19–25 ene',5:'26 ene–1 feb',6:'2–8 feb',7:'9–15 feb',8:'16–22 feb',9:'23 feb–1 mar',10:'2–8 mar',11:'9–15 mar',12:'16–22 mar',13:'23–29 mar',14:'30 mar–5 abr',15:'6–12 abr',16:'13–19 abr',17:'20–26 abr',18:'27 abr–3 may',19:'4–10 may',20:'11–17 may',21:'18–24 may',22:'25–31 may',23:'1–7 jun',24:'8–14 jun',25:'15–21 jun',26:'22–28 jun'};
 
   let semActs=data.filter(r=>r.sem===sem&&r.est);
   if(soloAtrProc) semActs=semActs.filter(r=>r.est==='Atrasado'||r.est==='En Proceso');
