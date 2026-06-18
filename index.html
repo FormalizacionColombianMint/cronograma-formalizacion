@@ -1008,11 +1008,16 @@ function abrirFormNueva(){
 function calcularSemana(){
   const ini = document.getElementById('f-ini').value;
   if(!ini) return;
-  // Calcular semana ISO correctamente
   const d = new Date(ini + 'T12:00:00');
-  const jan1 = new Date(d.getFullYear(), 0, 1);
-  const dayOfYear = Math.floor((d - jan1) / (1000*60*60*24));
-  const weekNum = Math.ceil((dayOfYear + jan1.getDay() + 1) / 7);
+  // Ajustar al lunes de esa semana (0=dom, 1=lun ... 6=sab)
+  const day = d.getDay(); // 0=dom
+  const diffToMonday = (day === 0) ? -6 : 1 - day;
+  const monday = new Date(d);
+  monday.setDate(d.getDate() + diffToMonday);
+  // Semana del año contando desde el lunes
+  const jan1 = new Date(monday.getFullYear(), 0, 1);
+  const dayOfYear = Math.floor((monday - jan1) / (1000*60*60*24));
+  const weekNum = Math.ceil((dayOfYear + 1) / 7);
   document.getElementById('f-sem').value = weekNum;
 }
 
