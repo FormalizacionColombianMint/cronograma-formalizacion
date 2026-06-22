@@ -903,7 +903,7 @@ function filaHtml(r){
     <td><span class="resp-t" title="${r.resp}">${r.resp}</span></td>
     <td style="font-size:11px;color:#6b6b68">${r.ini}</td>
     <td style="font-size:11px;color:#6b6b68">${r.fin}</td>
-    <td><div class="av-w"><div class="av-b"><div class="av-f" style="width:${avP}%;background:${avC}"></div></div><input type="number" min="0" max="100" value="${avP}" onchange="cambiarAv(${r.id},this.value)" onclick="event.stopPropagation()" style="width:42px;font-size:11px;border:1px solid #d3d1c7;border-radius:5px;padding:1px 4px;text-align:center;background:#fff;color:#1a1a1a;outline:none" title="Editar avance (%)"></div></td>
+    <td><div class="av-w"><div class="av-b" id="av-bar-${r.id}"><div class="av-f" style="width:${avP}%;background:${avC}"></div></div><input type="number" min="0" max="100" value="${avP}" onchange="cambiarAv(${r.id},this.value)" onclick="event.stopPropagation()" style="width:42px;font-size:11px;border:1px solid #d3d1c7;border-radius:5px;padding:1px 4px;text-align:center;background:#fff;color:#1a1a1a;outline:none" title="Editar avance (%)"></div></td>
     <td style="white-space:nowrap">${sel}&nbsp;<button onclick="eliminarAct(${r.id});event.stopPropagation()" title="Eliminar" style="background:none;border:none;cursor:pointer;color:#ccc;font-size:13px;padding:0;line-height:1" onmouseover="this.style.color='#e24b4a'" onmouseout="this.style.color='#ccc'">✕</button></td>
   </tr>`;
 }
@@ -922,7 +922,7 @@ function filaHtmlConSem(r){
     <td><span class="resp-t" title="${r.resp}">${r.resp}</span></td>
     <td style="font-size:11px;color:#6b6b68">${r.ini}</td>
     <td style="font-size:11px;color:#6b6b68">${r.fin}</td>
-    <td><div class="av-w"><div class="av-b"><div class="av-f" style="width:${avP}%;background:${avC}"></div></div><input type="number" min="0" max="100" value="${avP}" onchange="cambiarAv(${r.id},this.value)" onclick="event.stopPropagation()" style="width:42px;font-size:11px;border:1px solid #d3d1c7;border-radius:5px;padding:1px 4px;text-align:center;background:#fff;color:#1a1a1a;outline:none" title="Editar avance (%)"></div></td>
+    <td><div class="av-w"><div class="av-b" id="av-bar-${r.id}"><div class="av-f" style="width:${avP}%;background:${avC}"></div></div><input type="number" min="0" max="100" value="${avP}" onchange="cambiarAv(${r.id},this.value)" onclick="event.stopPropagation()" style="width:42px;font-size:11px;border:1px solid #d3d1c7;border-radius:5px;padding:1px 4px;text-align:center;background:#fff;color:#1a1a1a;outline:none" title="Editar avance (%)"></div></td>
     <td style="white-space:nowrap">${sel}&nbsp;<button onclick="eliminarAct(${r.id});event.stopPropagation()" title="Eliminar" style="background:none;border:none;cursor:pointer;color:#ccc;font-size:13px;padding:0;line-height:1" onmouseover="this.style.color='#e24b4a'" onmouseout="this.style.color='#ccc'">✕</button></td>
   </tr>`;
 }
@@ -961,9 +961,11 @@ function cambiarEst(id,est){
   if(est==='Completado')r.av=1;
   else if(est==='Sin Empezar')r.av=0;
   const abiertas=getSemsAbiertas();
+  const abiertosM=getMesesAbiertos();
   applyFilters();
   renderCharts();
   if(vistaActual==='semana') reabrirSems(abiertas);
+  if(vistaActual==='mes') reabrirMeses(abiertosM);
   guardarCambio(id);
 }
 
@@ -1298,6 +1300,7 @@ function generarPDF(){
       <td style="padding:6px 8px;font-size:11px;color:#1a1a1a;max-width:240px">${r.act}${notas}</td>
       <td style="padding:6px 8px;font-size:10px;color:#6b6b68">${r.resp}</td>
       <td style="padding:6px 8px;font-size:10px;color:#6b6b68">${r.ini}</td>
+      <td style="padding:6px 8px;font-size:10px;color:#6b6b68">${r.fin}</td>
       <td style="padding:6px 8px;font-size:10px;text-align:center">${avP}%</td>
       <td style="padding:6px 8px"><span style="font-size:10px;font-weight:600;padding:2px 7px;border-radius:10px;background:${estBg};color:${estColor}">${r.est}</span></td>
     </tr>`;
@@ -1384,11 +1387,12 @@ function generarPDF(){
     ${semActs.length?`
     <table class="acts">
       <thead><tr>
-        <th style="width:38%">Actividad</th>
-        <th style="width:18%">Responsable</th>
-        <th style="width:12%">Inicio</th>
-        <th style="width:8%">Avance</th>
-        <th style="width:14%">Estado</th>
+        <th style="width:34%">Actividad</th>
+        <th style="width:16%">Responsable</th>
+        <th style="width:10%">Inicio</th>
+        <th style="width:10%">Fin</th>
+        <th style="width:7%">Avance</th>
+        <th style="width:13%">Estado</th>
       </tr></thead>
       <tbody>${rowsHTML}</tbody>
     </table>`:'<p style="font-size:12px;color:#9b9b98;text-align:center;padding:1rem">No hay actividades para esta semana con los filtros seleccionados.</p>'}
