@@ -379,7 +379,7 @@ tr.r-data:hover td{background:#fafaf8}
 <script>
 
 // ── VERSIÓN ───────────────────────────────────────────────────────────────────
-const APP_VERSION = '1.2';
+const APP_VERSION = '1.3';
 
 // ── SUPABASE CONFIG ──────────────────────────────────────────────────────────
 const SUPA_URL = 'https://hfvyqrqebvndqthkjwjn.supabase.co';
@@ -973,10 +973,10 @@ function calcularSemanaEditar(){
   const diffToMonday = (day === 0) ? -6 : 1 - day;
   const monday = new Date(d);
   monday.setDate(d.getDate() + diffToMonday);
-  const jan1 = new Date(monday.getFullYear(), 0, 1);
-  const dayOfYear = Math.floor((monday - jan1) / (1000*60*60*24));
-  const weekNum = Math.ceil((dayOfYear + 1) / 7);
-  document.getElementById('e-sem').value = weekNum;
+  const projectStart = new Date('2026-01-05T12:00:00');
+  const diffDays = Math.floor((monday - projectStart) / (1000*60*60*24));
+  const weekNum = 2 + Math.floor(diffDays / 7);
+  document.getElementById('e-sem').value = Math.max(1, weekNum);
 }
 
 function abrirEditar(id){
@@ -1120,16 +1120,16 @@ function calcularSemana(){
   const ini = document.getElementById('f-ini').value;
   if(!ini) return;
   const d = new Date(ini + 'T12:00:00');
-  // Ajustar al lunes de esa semana (0=dom, 1=lun ... 6=sab)
-  const day = d.getDay(); // 0=dom
+  // Ajustar al lunes de esa semana
+  const day = d.getDay();
   const diffToMonday = (day === 0) ? -6 : 1 - day;
   const monday = new Date(d);
   monday.setDate(d.getDate() + diffToMonday);
-  // Semana del año contando desde el lunes
-  const jan1 = new Date(monday.getFullYear(), 0, 1);
-  const dayOfYear = Math.floor((monday - jan1) / (1000*60*60*24));
-  const weekNum = Math.ceil((dayOfYear + 1) / 7);
-  document.getElementById('f-sem').value = weekNum;
+  // Semana del proyecto: semana 2 empieza el 5 ene 2026
+  const projectStart = new Date('2026-01-05T12:00:00');
+  const diffDays = Math.floor((monday - projectStart) / (1000*60*60*24));
+  const weekNum = 2 + Math.floor(diffDays / 7);
+  document.getElementById('f-sem').value = Math.max(1, weekNum);
 }
 
 async function guardarAct(){
@@ -1281,9 +1281,13 @@ async function subirDatosBase(){
 function initUI(){
   // Calcular semana actual dinamicamente
   const hoy = new Date();
-  const inicioSem2 = new Date('2026-01-05');
-  const diffDays = Math.floor((hoy - inicioSem2) / (1000*60*60*24));
-  const semActual = Math.min(26, Math.max(2, 2 + Math.floor(diffDays/7)));
+  const inicioSem2 = new Date('2026-01-05T12:00:00');
+  // Ajustar hoy al lunes de su semana
+  const hoyDay = hoy.getDay();
+  const hoyMonday = new Date(hoy);
+  hoyMonday.setDate(hoy.getDate() + ((hoyDay === 0) ? -6 : 1 - hoyDay));
+  const diffDays = Math.floor((hoyMonday - inicioSem2) / (1000*60*60*24));
+  const semActual = Math.max(2, 2 + Math.floor(diffDays/7));
   const el = document.getElementById('badge-semana');
   if(el) el.textContent = 'Semana actual: ' + semActual;
   const vEl = document.getElementById('badge-version');
