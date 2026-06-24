@@ -379,7 +379,7 @@ tr.r-data:hover td{background:#fafaf8}
 <script>
 
 // ── VERSIÓN ───────────────────────────────────────────────────────────────────
-const APP_VERSION = '1.6';
+const APP_VERSION = '1.7';
 
 // ── SUPABASE CONFIG ──────────────────────────────────────────────────────────
 const SUPA_URL = 'https://hfvyqrqebvndqthkjwjn.supabase.co';
@@ -1124,13 +1124,21 @@ function abrirFormNueva(){
   document.getElementById('ov-form').classList.add('active');
 }
 function getISOWeek(date){
-  const d = new Date(date);
-  d.setHours(12,0,0,0);
-  // ISO week: set to Thursday of current week (day 4)
-  const day = d.getDay() || 7; // convert Sunday(0) to 7
-  d.setDate(d.getDate() + 4 - day);
-  const yearStart = new Date(d.getFullYear(), 0, 1);
-  return Math.ceil(((d - yearStart) / 86400000 + 1) / 7);
+  // Parse date safely avoiding timezone issues
+  let d;
+  if(typeof date === 'string'){
+    const parts = date.split('-');
+    d = new Date(parseInt(parts[0]), parseInt(parts[1])-1, parseInt(parts[2]), 12, 0, 0);
+  } else {
+    d = new Date(date);
+    d.setHours(12,0,0,0);
+  }
+  // ISO week: Thursday of current week determines the week number
+  const day = d.getDay() || 7; // Mon=1 ... Sun=7
+  const thursday = new Date(d);
+  thursday.setDate(d.getDate() + (4 - day));
+  const yearStart = new Date(thursday.getFullYear(), 0, 1);
+  return Math.ceil(((thursday - yearStart) / 86400000 + 1) / 7);
 }
 function calcularSemana(){
   const ini = document.getElementById('f-ini').value;
