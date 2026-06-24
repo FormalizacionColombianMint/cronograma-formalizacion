@@ -239,6 +239,43 @@ tr.r-data:hover td{background:#fafaf8}
 <div class="footer">Cronograma · C.I. Colombian Mint · Formalización Minera 2026</div>
 </div>
 
+<!-- FORM EDITAR ACTIVIDAD -->
+<div class="overlay" id="ov-editar" onclick="cerrarOv(event,'ov-editar')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="m-hdr"><h2>Editar actividad</h2><button class="m-close" onclick="cerrar('ov-editar')">✕</button></div>
+    <div class="m-body">
+      <input type="hidden" id="e-id">
+      <div class="fg">
+        <div class="fgi full"><label>Descripción *</label><textarea id="e-act" rows="2"></textarea></div>
+        <div class="fgi"><label>Responsable *</label>
+          <select id="e-resp">
+            <option value="">Seleccionar…</option>
+            <option>Catalina Valencia</option><option>Juanita David</option><option>Cristian Rojas</option>
+            <option>Sebastian Ceballos</option><option>Walter Guzmán</option><option>Todo el grupo</option>
+            <option>Juanita - Sebastian</option><option>Catalina - Cristian</option><option>Walter - Juanita</option>
+            <option>Walter - Catalina - Cristian</option><option>Cristian - Sebastian - Juanita</option>
+            <option>Cristian - Sebastian</option><option>Walter - Sebastian</option><option>Walter - Cristian</option>
+            <option>Walter - Sebastian - Juanita</option><option>Catalina - Walter</option><option>Catalina - Juanita</option>
+            <option>Walter - Cristian - Sebastian</option><option>Sebastian-Cristian-Catalina</option>
+          </select>
+        </div>
+        <div class="fgi"><label>Semana *</label><input type="number" id="e-sem" min="1" max="52"></div>
+        <div class="fgi"><label>Fecha inicio *</label><input type="date" id="e-ini" onchange="calcularSemanaEditar()"></div>
+        <div class="fgi"><label>Fecha fin *</label><input type="date" id="e-fin"></div>
+        <div class="fgi"><label>Estado</label>
+          <select id="e-est"><option>Sin Empezar</option><option>En Proceso</option><option>Completado</option><option>Atrasado</option></select>
+        </div>
+        <div class="fgi"><label>Avance (%)</label><input type="number" id="e-av" min="0" max="100"></div>
+      </div>
+      <p class="f-err" id="e-err"></p>
+    </div>
+    <div class="m-foot">
+      <button class="btn" onclick="cerrar('ov-editar')">Cancelar</button>
+      <button class="btn btn-green" onclick="guardarEdicion()">Guardar cambios</button>
+    </div>
+  </div>
+</div>
+
 <!-- FORM NUEVA ACTIVIDAD -->
 <div class="overlay" id="ov-form" onclick="cerrarOv(event,'ov-form')">
   <div class="modal" onclick="event.stopPropagation()">
@@ -342,7 +379,7 @@ tr.r-data:hover td{background:#fafaf8}
 <script>
 
 // ── VERSIÓN ───────────────────────────────────────────────────────────────────
-const APP_VERSION = '1.1';
+const APP_VERSION = '1.2';
 
 // ── SUPABASE CONFIG ──────────────────────────────────────────────────────────
 const SUPA_URL = 'https://hfvyqrqebvndqthkjwjn.supabase.co';
@@ -904,7 +941,7 @@ function filaHtml(r){
     <td style="font-size:11px;color:#6b6b68">${r.ini}</td>
     <td style="font-size:11px;color:#6b6b68">${r.fin}</td>
     <td><div class="av-w"><div class="av-b" id="av-bar-${r.id}"><div class="av-f" style="width:${avP}%;background:${avC}"></div></div><input type="number" min="0" max="100" value="${avP}" onchange="cambiarAv(${r.id},this.value)" onclick="event.stopPropagation()" style="width:42px;font-size:11px;border:1px solid #d3d1c7;border-radius:5px;padding:1px 4px;text-align:center;background:#fff;color:#1a1a1a;outline:none" title="Editar avance (%)"></div></td>
-    <td style="white-space:nowrap">${sel}&nbsp;<button onclick="eliminarAct(${r.id});event.stopPropagation()" title="Eliminar" style="background:none;border:none;cursor:pointer;color:#ccc;font-size:13px;padding:0;line-height:1" onmouseover="this.style.color='#e24b4a'" onmouseout="this.style.color='#ccc'">✕</button></td>
+    <td style="white-space:nowrap">${sel}&nbsp;<button onclick="abrirEditar(${r.id});event.stopPropagation()" title="Editar actividad" style="background:none;border:none;cursor:pointer;color:#ccc;font-size:12px;padding:0;line-height:1" onmouseover="this.style.color='#185fa5'" onmouseout="this.style.color='#ccc'">✏️</button>&nbsp;<button onclick="eliminarAct(${r.id});event.stopPropagation()" title="Eliminar" style="background:none;border:none;cursor:pointer;color:#ccc;font-size:13px;padding:0;line-height:1" onmouseover="this.style.color='#e24b4a'" onmouseout="this.style.color='#ccc'">✕</button></td>
   </tr>`;
 }
 function filaHtmlConSem(r){
@@ -923,8 +960,72 @@ function filaHtmlConSem(r){
     <td style="font-size:11px;color:#6b6b68">${r.ini}</td>
     <td style="font-size:11px;color:#6b6b68">${r.fin}</td>
     <td><div class="av-w"><div class="av-b" id="av-bar-${r.id}"><div class="av-f" style="width:${avP}%;background:${avC}"></div></div><input type="number" min="0" max="100" value="${avP}" onchange="cambiarAv(${r.id},this.value)" onclick="event.stopPropagation()" style="width:42px;font-size:11px;border:1px solid #d3d1c7;border-radius:5px;padding:1px 4px;text-align:center;background:#fff;color:#1a1a1a;outline:none" title="Editar avance (%)"></div></td>
-    <td style="white-space:nowrap">${sel}&nbsp;<button onclick="eliminarAct(${r.id});event.stopPropagation()" title="Eliminar" style="background:none;border:none;cursor:pointer;color:#ccc;font-size:13px;padding:0;line-height:1" onmouseover="this.style.color='#e24b4a'" onmouseout="this.style.color='#ccc'">✕</button></td>
+    <td style="white-space:nowrap">${sel}&nbsp;<button onclick="abrirEditar(${r.id});event.stopPropagation()" title="Editar actividad" style="background:none;border:none;cursor:pointer;color:#ccc;font-size:12px;padding:0;line-height:1" onmouseover="this.style.color='#185fa5'" onmouseout="this.style.color='#ccc'">✏️</button>&nbsp;<button onclick="eliminarAct(${r.id});event.stopPropagation()" title="Eliminar" style="background:none;border:none;cursor:pointer;color:#ccc;font-size:13px;padding:0;line-height:1" onmouseover="this.style.color='#e24b4a'" onmouseout="this.style.color='#ccc'">✕</button></td>
   </tr>`;
+}
+
+// ── EDITAR ACTIVIDAD ─────────────────────────────────────────────────────────
+function calcularSemanaEditar(){
+  const ini = document.getElementById('e-ini').value;
+  if(!ini) return;
+  const d = new Date(ini + 'T12:00:00');
+  const day = d.getDay();
+  const diffToMonday = (day === 0) ? -6 : 1 - day;
+  const monday = new Date(d);
+  monday.setDate(d.getDate() + diffToMonday);
+  const jan1 = new Date(monday.getFullYear(), 0, 1);
+  const dayOfYear = Math.floor((monday - jan1) / (1000*60*60*24));
+  const weekNum = Math.ceil((dayOfYear + 1) / 7);
+  document.getElementById('e-sem').value = weekNum;
+}
+
+function abrirEditar(id){
+  const r = data.find(r=>r.id===id);
+  if(!r) return;
+  document.getElementById('e-id').value = id;
+  document.getElementById('e-act').value = r.act;
+  document.getElementById('e-resp').value = r.resp;
+  document.getElementById('e-sem').value = r.sem;
+  document.getElementById('e-ini').value = r.ini;
+  document.getElementById('e-fin').value = r.fin;
+  document.getElementById('e-est').value = r.est||'Sin Empezar';
+  document.getElementById('e-av').value = Math.round(r.av*100);
+  document.getElementById('e-err').style.display='none';
+  document.getElementById('ov-editar').classList.add('active');
+}
+
+async function guardarEdicion(){
+  const id = parseInt(document.getElementById('e-id').value);
+  const act = document.getElementById('e-act').value.trim();
+  const resp = document.getElementById('e-resp').value;
+  const sem = parseInt(document.getElementById('e-sem').value);
+  const ini = document.getElementById('e-ini').value;
+  const fin = document.getElementById('e-fin').value;
+  const est = document.getElementById('e-est').value;
+  const av = Math.min(100,Math.max(0,parseInt(document.getElementById('e-av').value)||0))/100;
+  const err = document.getElementById('e-err');
+  if(!act){err.textContent='Ingresa una descripción.';err.style.display='block';return;}
+  if(!resp){err.textContent='Selecciona un responsable.';err.style.display='block';return;}
+  if(!sem||sem<1){err.textContent='Ingresa un número de semana válido.';err.style.display='block';return;}
+  if(!ini||!fin){err.textContent='Ingresa las fechas de inicio y fin.';err.style.display='block';return;}
+  err.style.display='none';
+  const r = data.find(r=>r.id===id);
+  if(!r) return;
+  r.act=act; r.resp=resp; r.sem=sem; r.ini=ini; r.fin=fin; r.est=est; r.av=av;
+  data.sort((a,b)=>b.sem-a.sem||b.ini.localeCompare(a.ini));
+  cerrar('ov-editar');
+  const abiertas=getSemsAbiertas();
+  const abiertosM=getMesesAbiertos();
+  poblarFiltros();
+  applyFilters();
+  renderCharts();
+  if(vistaActual==='semana') reabrirSems(abiertas);
+  if(vistaActual==='mes') reabrirMeses(abiertosM);
+  toast('Guardando cambios...');
+  try{
+    await supaFetch('actividades?id=eq.'+id, 'PATCH', {sem,act,resp,ini,fin,av,est,notas:r.notas||[]}, 'return=minimal');
+    toast('Cambios guardados ✓');
+  }catch(e){ toast('⚠️ Error al guardar: '+e.message); }
 }
 
 // ── ELIMINAR ACTIVIDAD ───────────────────────────────────────────────────────
