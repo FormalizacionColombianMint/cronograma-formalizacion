@@ -379,7 +379,7 @@ tr.r-data:hover td{background:#fafaf8}
 <script>
 
 // ── VERSIÓN ───────────────────────────────────────────────────────────────────
-const APP_VERSION = '1.4';
+const APP_VERSION = '1.5';
 
 // ── SUPABASE CONFIG ──────────────────────────────────────────────────────────
 const SUPA_URL = 'https://hfvyqrqebvndqthkjwjn.supabase.co';
@@ -785,13 +785,28 @@ function renderPorSemana(d){
   const sems=[...new Set(d.map(r=>r.sem))].sort((a,b)=>b-a);
   const container=document.getElementById('vista-container');
   if(!sems.length){container.innerHTML='<p style="text-align:center;padding:2rem;color:#9b9b98;font-size:13px">No hay actividades que coincidan.</p>';document.getElementById('tbl-info').textContent='';return;}
-  const semDates={
-    2:'5–11 ene',3:'12–18 ene',4:'19–25 ene',5:'26 ene–1 feb',
-    6:'2–8 feb',7:'9–15 feb',8:'16–22 feb',9:'23 feb–1 mar',
-    10:'2–8 mar',11:'9–15 mar',12:'16–22 mar',13:'23–29 mar',
-    14:'30 mar–5 abr',15:'6–12 abr',16:'13–19 abr',17:'20–26 abr',
-    18:'27 abr–3 may',19:'4–10 may',20:'11–17 may',21:'18–24 may',
-    22:'25–31 may',23:'1–7 jun',24:'8–14 jun',25:'15–21 jun',26:'22–28 jun'};
+  // Calcular fechas de semana dinamicamente usando ISO week
+  const semDates = new Proxy({}, {
+    get(_, sem){
+      sem = parseInt(sem);
+      if(isNaN(sem)) return '';
+      // Encontrar el lunes de la semana ISO dada en 2026
+      // Jan 1 2026 = Thursday, ISO week 1 starts Dec 29 2025
+      const jan4 = new Date(2026, 0, 4, 12); // Jan 4 always in week 1
+      const week1Monday = new Date(jan4);
+      week1Monday.setDate(jan4.getDate() - (jan4.getDay()||7) + 1);
+      const monday = new Date(week1Monday);
+      monday.setDate(week1Monday.getDate() + (sem-1)*7);
+      const sunday = new Date(monday);
+      sunday.setDate(monday.getDate() + 6);
+      const months = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+      if(monday.getMonth() === sunday.getMonth()){
+        return monday.getDate()+'–'+sunday.getDate()+' '+months[monday.getMonth()];
+      } else {
+        return monday.getDate()+' '+months[monday.getMonth()]+'–'+sunday.getDate()+' '+months[sunday.getMonth()];
+      }
+    }
+  });
   container.innerHTML=sems.map(s=>{
     const rows=d.filter(r=>r.sem===s);
     const m=calcM(rows);
@@ -1353,7 +1368,21 @@ function generarPDF(){
   const soloAtrProc=document.getElementById('rep-atrasadas').checked;
 
   const m=calcM(data);
-  const semDates={2:'5–11 ene',3:'12–18 ene',4:'19–25 ene',5:'26 ene–1 feb',6:'2–8 feb',7:'9–15 feb',8:'16–22 feb',9:'23 feb–1 mar',10:'2–8 mar',11:'9–15 mar',12:'16–22 mar',13:'23–29 mar',14:'30 mar–5 abr',15:'6–12 abr',16:'13–19 abr',17:'20–26 abr',18:'27 abr–3 may',19:'4–10 may',20:'11–17 may',21:'18–24 may',22:'25–31 may',23:'1–7 jun',24:'8–14 jun',25:'15–21 jun',26:'22–28 jun'};
+  // Fechas dinamicas para el PDF
+  const semDatesCalc = (sem)=>{
+    const jan4 = new Date(2026, 0, 4, 12);
+    const week1Monday = new Date(jan4);
+    week1Monday.setDate(jan4.getDate() - (jan4.getDay()||7) + 1);
+    const monday = new Date(week1Monday);
+    monday.setDate(week1Monday.getDate() + (sem-1)*7);
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+    const months = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+    if(monday.getMonth()===sunday.getMonth()) return monday.getDate()+'\u2013'+sunday.getDate()+' '+months[monday.getMonth()];
+    return monday.getDate()+' '+months[monday.getMonth()]+'\u2013'+sunday.getDate()+' '+months[sunday.getMonth()];
+  };
+  const semDates = {valueOf:()=>'', toString:()=>''};
+  Object.assign(semDates, Object.fromEntries([...Array(53).keys()].slice(1).map(s=>[s, semDatesCalc(s)])));
 
   let semActs=data.filter(r=>r.sem===sem&&r.est);
   if(soloAtrProc) semActs=semActs.filter(r=>r.est==='Atrasado'||r.est==='En Proceso');
