@@ -379,7 +379,7 @@ tr.r-data:hover td{background:#fafaf8}
 <script>
 
 // ── VERSIÓN ───────────────────────────────────────────────────────────────────
-const APP_VERSION = '1.7';
+const APP_VERSION = '1.9';
 
 // ── SUPABASE CONFIG ──────────────────────────────────────────────────────────
 const SUPA_URL = 'https://hfvyqrqebvndqthkjwjn.supabase.co';
@@ -983,7 +983,7 @@ function filaHtmlConSem(r){
 function calcularSemanaEditar(){
   const ini = document.getElementById('e-ini').value;
   if(!ini) return;
-  document.getElementById('e-sem').value = getISOWeek(new Date(ini));
+  document.getElementById('e-sem').value = getISOWeek(ini);
 }
 
 function abrirEditar(id){
@@ -1123,27 +1123,29 @@ function abrirFormNueva(){
   document.getElementById('f-err').style.display='none';
   document.getElementById('ov-form').classList.add('active');
 }
-function getISOWeek(date){
-  // Parse date safely avoiding timezone issues
-  let d;
-  if(typeof date === 'string'){
-    const parts = date.split('-');
-    d = new Date(parseInt(parts[0]), parseInt(parts[1])-1, parseInt(parts[2]), 12, 0, 0);
+function getISOWeek(input){
+  // Always parse as local date to avoid UTC timezone shift
+  let y, m, d;
+  if(typeof input === 'string' && input.includes('-')){
+    const p = input.split('-');
+    y = +p[0]; m = +p[1]-1; d = +p[2];
   } else {
-    d = new Date(date);
-    d.setHours(12,0,0,0);
+    const dt = new Date(input);
+    y = dt.getFullYear(); m = dt.getMonth(); d = dt.getDate();
   }
-  // ISO week: Thursday of current week determines the week number
-  const day = d.getDay() || 7; // Mon=1 ... Sun=7
-  const thursday = new Date(d);
-  thursday.setDate(d.getDate() + (4 - day));
-  const yearStart = new Date(thursday.getFullYear(), 0, 1);
-  return Math.ceil(((thursday - yearStart) / 86400000 + 1) / 7);
+  // Create date at noon local time to avoid DST issues
+  const date = new Date(y, m, d, 12);
+  // ISO week: find Thursday of this week (ISO weeks start Monday)
+  const dow = date.getDay() || 7; // Mon=1 ... Sun=7
+  const thu = new Date(date);
+  thu.setDate(date.getDate() + 4 - dow);
+  const jan1 = new Date(thu.getFullYear(), 0, 1);
+  return Math.ceil(((thu - jan1) / 864e5 + 1) / 7);
 }
 function calcularSemana(){
   const ini = document.getElementById('f-ini').value;
   if(!ini) return;
-  document.getElementById('f-sem').value = getISOWeek(new Date(ini));
+  document.getElementById('f-sem').value = getISOWeek(ini);
 }
 
 async function guardarAct(){
@@ -1295,7 +1297,9 @@ async function subirDatosBase(){
 function initUI(){
   // Calcular semana actual dinamicamente
   const hoy = new Date();
-  const semActual = getISOWeek(hoy);
+  // Format today as YYYY-MM-DD string to avoid timezone issues
+  const hoyStr = hoy.getFullYear()+'-'+String(hoy.getMonth()+1).padStart(2,'0')+'-'+String(hoy.getDate()).padStart(2,'0');
+  const semActual = getISOWeek(hoyStr);
   const el = document.getElementById('badge-semana');
   if(el) el.textContent = 'Semana actual: ' + semActual;
   const vEl = document.getElementById('badge-version');
@@ -1365,7 +1369,8 @@ function abrirReporte(){
 function generarPDF(){
   // Compute current week dynamically (week 2 starts Jan 5 2026)
   const hoy=new Date();
-  const semanaActual=getISOWeek(hoy);
+  const hoyStr2 = hoy.getFullYear()+'-'+String(hoy.getMonth()+1).padStart(2,'0')+'-'+String(hoy.getDate()).padStart(2,'0');
+  const semanaActual=getISOWeek(hoyStr2);
   const semVal=document.getElementById('rep-sem').value;
   const err=document.getElementById('rep-err');
   if(!semVal){err.textContent='Selecciona una semana.';err.style.display='block';return;}
