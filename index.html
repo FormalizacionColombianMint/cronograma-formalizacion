@@ -1303,7 +1303,7 @@ function initUI(){
   const el = document.getElementById('badge-semana');
   if(el) el.textContent = 'Semana actual: ' + semActual;
   const vEl = document.getElementById('badge-version');
-  if(vEl) vEl.textContent = 'v' + APP_VERSION;
+  if(vEl) vEl.innerHTML = 'v' + APP_VERSION + ' &nbsp;·&nbsp; developed by WGC Technology';
   poblarFiltros();
   // Verificar versión guardada en localStorage
   try{
