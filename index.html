@@ -238,7 +238,6 @@ tr.r-data:hover td{background:#fafaf8}
 <div class="tbl-info" id="tbl-info"></div>
 <div class="footer">Cronograma · C.I. Colombian Mint · Formalización Minera 2026</div>
 <div style="position:fixed;bottom:10px;right:14px;font-size:10px;color:#c8c7c3;pointer-events:none;z-index:10;letter-spacing:0.02em" id="wgc-watermark"></div>
-<script>document.getElementById('wgc-watermark').textContent='v'+APP_VERSION+' · Developed by WGC Technology';</script>
 </div>
 
 <!-- FORM EDITAR ACTIVIDAD -->
@@ -1306,6 +1305,8 @@ function initUI(){
   if(el) el.textContent = 'Semana actual: ' + semActual;
   const vEl = document.getElementById('badge-version');
   if(vEl) vEl.textContent = 'v' + APP_VERSION;
+  const wm = document.getElementById('wgc-watermark');
+  if(wm) wm.textContent = 'v' + APP_VERSION + ' · Developed by WGC Technology';
   poblarFiltros();
   // Verificar versión guardada en localStorage
   try{
