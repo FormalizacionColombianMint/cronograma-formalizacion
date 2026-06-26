@@ -380,7 +380,7 @@ tr.r-data:hover td{background:#fafaf8}
 <script>
 
 // ── VERSIÓN ───────────────────────────────────────────────────────────────────
-const APP_VERSION = '1.9';
+const APP_VERSION = '2.0';
 
 // ── SUPABASE CONFIG ──────────────────────────────────────────────────────────
 const SUPA_URL = 'https://hfvyqrqebvndqthkjwjn.supabase.co';
@@ -954,8 +954,8 @@ function filaHtml(r){
   return `<tr class="${cls}" ${click}>
     <td style="max-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${r.act}">${r.act}${notasH}</td>
     <td><span class="resp-t" title="${r.resp}">${r.resp}</span></td>
-    <td style="font-size:11px;color:#6b6b68">${r.ini}</td>
-    <td style="font-size:11px;color:#6b6b68">${r.fin}</td>
+    <td style="font-size:11px;color:#6b6b68">${fmtDate(r.ini)}</td>
+    <td style="font-size:11px;color:#6b6b68">${fmtDate(r.fin)}</td>
     <td><div class="av-w"><div class="av-b" id="av-bar-${r.id}"><div class="av-f" style="width:${avP}%;background:${avC}"></div></div><input type="number" min="0" max="100" value="${avP}" onchange="cambiarAv(${r.id},this.value)" onclick="event.stopPropagation()" style="width:42px;font-size:11px;border:1px solid #d3d1c7;border-radius:5px;padding:1px 4px;text-align:center;background:#fff;color:#1a1a1a;outline:none" title="Editar avance (%)"></div></td>
     <td style="white-space:nowrap">${sel}&nbsp;<button onclick="abrirEditar(${r.id});event.stopPropagation()" title="Editar actividad" style="background:none;border:none;cursor:pointer;color:#ccc;font-size:12px;padding:0;line-height:1" onmouseover="this.style.color='#185fa5'" onmouseout="this.style.color='#ccc'">✏️</button>&nbsp;<button onclick="eliminarAct(${r.id});event.stopPropagation()" title="Eliminar" style="background:none;border:none;cursor:pointer;color:#ccc;font-size:13px;padding:0;line-height:1" onmouseover="this.style.color='#e24b4a'" onmouseout="this.style.color='#ccc'">✕</button></td>
   </tr>`;
@@ -973,8 +973,8 @@ function filaHtmlConSem(r){
     <td style="max-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${r.act}">${r.act}${notasH}</td>
     <td style="text-align:center;font-size:11px;color:#9b9b98">${r.sem}</td>
     <td><span class="resp-t" title="${r.resp}">${r.resp}</span></td>
-    <td style="font-size:11px;color:#6b6b68">${r.ini}</td>
-    <td style="font-size:11px;color:#6b6b68">${r.fin}</td>
+    <td style="font-size:11px;color:#6b6b68">${fmtDate(r.ini)}</td>
+    <td style="font-size:11px;color:#6b6b68">${fmtDate(r.fin)}</td>
     <td><div class="av-w"><div class="av-b" id="av-bar-${r.id}"><div class="av-f" style="width:${avP}%;background:${avC}"></div></div><input type="number" min="0" max="100" value="${avP}" onchange="cambiarAv(${r.id},this.value)" onclick="event.stopPropagation()" style="width:42px;font-size:11px;border:1px solid #d3d1c7;border-radius:5px;padding:1px 4px;text-align:center;background:#fff;color:#1a1a1a;outline:none" title="Editar avance (%)"></div></td>
     <td style="white-space:nowrap">${sel}&nbsp;<button onclick="abrirEditar(${r.id});event.stopPropagation()" title="Editar actividad" style="background:none;border:none;cursor:pointer;color:#ccc;font-size:12px;padding:0;line-height:1" onmouseover="this.style.color='#185fa5'" onmouseout="this.style.color='#ccc'">✏️</button>&nbsp;<button onclick="eliminarAct(${r.id});event.stopPropagation()" title="Eliminar" style="background:none;border:none;cursor:pointer;color:#ccc;font-size:13px;padding:0;line-height:1" onmouseover="this.style.color='#e24b4a'" onmouseout="this.style.color='#ccc'">✕</button></td>
   </tr>`;
@@ -1123,6 +1123,12 @@ function abrirFormNueva(){
   document.getElementById('f-av').value='0';
   document.getElementById('f-err').style.display='none';
   document.getElementById('ov-form').classList.add('active');
+}
+function fmtDate(d){
+  if(!d) return '';
+  const p = d.split('-');
+  if(p.length!==3) return d;
+  return p[2]+'/'+p[1]+'/'+p[0];
 }
 function getISOWeek(input){
   // Always parse as local date to avoid UTC timezone shift
