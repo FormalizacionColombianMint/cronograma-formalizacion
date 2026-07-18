@@ -380,7 +380,7 @@ tr.r-data:hover td{background:#fafaf8}
 <script>
 
 // ── VERSIÓN ───────────────────────────────────────────────────────────────────
-const APP_VERSION = '2.0';
+const APP_VERSION = '2.1';
 
 // ── SUPABASE CONFIG ──────────────────────────────────────────────────────────
 const SUPA_URL = 'https://hfvyqrqebvndqthkjwjn.supabase.co';
@@ -1305,10 +1305,12 @@ function initUI(){
   // Calcular semana actual dinamicamente
   const hoy = new Date();
   // Format today as YYYY-MM-DD string to avoid timezone issues
+  // Calculate current week using ISO standard
   const hoyStr = hoy.getFullYear()+'-'+String(hoy.getMonth()+1).padStart(2,'0')+'-'+String(hoy.getDate()).padStart(2,'0');
   const semActual = getISOWeek(hoyStr);
   const el = document.getElementById('badge-semana');
   if(el) el.textContent = 'Semana actual: ' + semActual;
+  console.log('Today:', hoyStr, '-> Week:', semActual);
   const vEl = document.getElementById('badge-version');
   if(vEl) vEl.textContent = 'v' + APP_VERSION;
   const wm = document.getElementById('wgc-watermark');
