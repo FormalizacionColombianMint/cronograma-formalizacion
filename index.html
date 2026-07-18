@@ -380,7 +380,7 @@ tr.r-data:hover td{background:#fafaf8}
 <script>
 
 // ── VERSIÓN ───────────────────────────────────────────────────────────────────
-const APP_VERSION = '2.1';
+const APP_VERSION = '2.3';
 
 // ── SUPABASE CONFIG ──────────────────────────────────────────────────────────
 const SUPA_URL = 'https://hfvyqrqebvndqthkjwjn.supabase.co';
@@ -1310,7 +1310,17 @@ function initUI(){
   const semActual = getISOWeek(hoyStr);
   const el = document.getElementById('badge-semana');
   if(el) el.textContent = 'Semana actual: ' + semActual;
-  console.log('Today:', hoyStr, '-> Week:', semActual);
+  // Update subtitle dynamically based on actual data
+  const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const sems = data.map(r=>r.sem).filter(Boolean);
+  const minSem = Math.min(...sems);
+  const maxSem = Math.max(...sems);
+  const inis = data.map(r=>r.ini).filter(Boolean).sort();
+  const fins = data.map(r=>r.fin).filter(Boolean).sort();
+  const mesInicio = inis.length ? meses[parseInt(inis[0].split('-')[1])-1] : 'Enero';
+  const mesFin = fins.length ? meses[parseInt(fins[fins.length-1].split('-')[1])-1] : 'Diciembre';
+  const sub = document.getElementById('hdr-subtitle');
+  if(sub) sub.textContent = 'Cronograma de actividades · Semanas '+minSem+'–'+semActual+' · '+mesInicio+'–'+mesFin+' 2026';
   const vEl = document.getElementById('badge-version');
   if(vEl) vEl.textContent = 'v' + APP_VERSION;
   const wm = document.getElementById('wgc-watermark');
