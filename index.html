@@ -380,7 +380,7 @@ tr.r-data:hover td{background:#fafaf8}
 <script>
 
 // ── VERSIÓN ───────────────────────────────────────────────────────────────────
-const APP_VERSION = '2.3';
+const APP_VERSION = '2.4';
 
 // ── SUPABASE CONFIG ──────────────────────────────────────────────────────────
 const SUPA_URL = 'https://hfvyqrqebvndqthkjwjn.supabase.co';
@@ -1320,7 +1320,7 @@ function initUI(){
   const mesInicio = inis.length ? meses[parseInt(inis[0].split('-')[1])-1] : 'Enero';
   const mesFin = fins.length ? meses[parseInt(fins[fins.length-1].split('-')[1])-1] : 'Diciembre';
   const sub = document.getElementById('hdr-subtitle');
-  if(sub) sub.textContent = 'Cronograma de actividades · Semanas '+minSem+'–'+semActual+' · '+mesInicio+'–'+mesFin+' 2026';
+  if(sub) sub.textContent = 'Cronograma de actividades · Semanas '+minSem+'–'+maxSem+' · '+mesInicio+'–'+mesFin+' 2026';
   const vEl = document.getElementById('badge-version');
   if(vEl) vEl.textContent = 'v' + APP_VERSION;
   const wm = document.getElementById('wgc-watermark');
