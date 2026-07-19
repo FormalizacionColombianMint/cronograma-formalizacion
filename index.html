@@ -229,7 +229,7 @@ tr.r-data:hover td{background:#fafaf8}
   <label>Semana</label>
   <select id="fil-sem"><option value="">Todas</option></select>
   <label>Mes</label>
-  <select id="fil-mes"><option value="">Todos</option><option value="01">Enero</option><option value="02">Febrero</option><option value="03">Marzo</option><option value="04">Abril</option><option value="05">Mayo</option><option value="06">Junio</option></select>
+  <select id="fil-mes"><option value="">Todos</option></select>
   <input type="text" id="fil-bus" placeholder="Buscar actividad…">
   <button class="btn" onclick="resetFiltros()">✕ Limpiar</button>
 </div>
@@ -380,7 +380,7 @@ tr.r-data:hover td{background:#fafaf8}
 <script>
 
 // ── VERSIÓN ───────────────────────────────────────────────────────────────────
-const APP_VERSION = '2.5';
+const APP_VERSION = '2.7';
 
 // ── SUPABASE CONFIG ──────────────────────────────────────────────────────────
 const SUPA_URL = 'https://hfvyqrqebvndqthkjwjn.supabase.co';
@@ -677,9 +677,9 @@ function renderCharts(){
     {l:'Completado',v:m.comp,c:'#1D9E75'},{l:'En proceso',v:m.proc,c:'#378ADD'},
     {l:'Atrasado',v:m.atr,c:'#E24B4A'},{l:'Sin empezar',v:m.sin,c:'#B4B2A9'}
   ].map(e=>`<div class="bi"><span class="bl">${e.l}</span><div class="bt"><div class="bf" style="width:${Math.round(e.v/m.total*100)}%;background:${e.c}"></div></div><span class="bn">${e.v}</span></div>`).join('');
-  // Actividades por mes - stacked bars (completado vs resto)
-  const meses=['01','02','03','04','05','06'];
-  const nombresCortos={'01':'Ene','02':'Feb','03':'Mar','04':'Abr','05':'May','06':'Jun'};
+  // Actividades por mes - stacked bars (dinamico)
+  const nombresCortos={'01':'Ene','02':'Feb','03':'Mar','04':'Abr','05':'May','06':'Jun','07':'Jul','08':'Ago','09':'Sep','10':'Oct','11':'Nov','12':'Dic'};
+  const meses=[...new Set(data.filter(r=>r.ini).map(r=>r.ini.substring(5,7)))].sort();
   const mesData=meses.map(mes=>{
     const rows=data.filter(r=>r.ini.startsWith('2026-'+mes)&&r.est);
     const comp=rows.filter(r=>r.est==='Completado').length;
@@ -1227,7 +1227,7 @@ function exportarCSV(){
   const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');
-  a.href=url;a.download='cronograma_formalizacion_2026.csv';a.click();
+  a.href=url;a.download='cronograma_formalizacion_'+new Date().getFullYear()+'.csv';a.click();
   URL.revokeObjectURL(url);
 }
 
@@ -1240,6 +1240,10 @@ function poblarFiltros(){
   const rOpts=[...new Set(data.map(r=>r.resp))].sort();
   document.getElementById('fil-resp').innerHTML='<option value="">Todos</option>'+rOpts.map(r=>`<option value="${r}">${r}</option>`).join('');
   const sOpts=[...new Set(data.map(r=>r.sem))].sort((a,b)=>b-a);
+  // Meses dinámicos
+  const mNombres={'01':'Enero','02':'Febrero','03':'Marzo','04':'Abril','05':'Mayo','06':'Junio','07':'Julio','08':'Agosto','09':'Septiembre','10':'Octubre','11':'Noviembre','12':'Diciembre'};
+  const mOpts=[...new Set(data.filter(r=>r.ini).map(r=>r.ini.substring(5,7)))].sort();
+  document.getElementById('fil-mes').innerHTML='<option value="">Todos</option>'+mOpts.map(m=>`<option value="${m}">${mNombres[m]||m}</option>`).join('');
   document.getElementById('fil-sem').innerHTML='<option value="">Todas</option>'+sOpts.map(s=>`<option value="${s}">Semana ${s}</option>`).join('');
 }
 
@@ -1258,7 +1262,7 @@ function showError(msg){
 async function cargarDatos(){
   showLoading('Conectando con Supabase...');
   try{
-    const rows = await supaFetch('actividades?order=sem.desc,ini.desc&limit=1000', 'GET');
+    const rows = await supaFetch('actividades?order=sem.desc,ini.desc&limit=5000', 'GET');
     if(rows.length > 0){
       data = rows.map(r=>({
         id: r.id,
@@ -1282,7 +1286,7 @@ async function cargarDatos(){
     // Auto-refresh cada 30 segundos
     setInterval(async()=>{
       try{
-        const rows = await supaFetch('actividades?order=sem.desc,ini.desc&limit=1000', 'GET');
+        const rows = await supaFetch('actividades?order=sem.desc,ini.desc&limit=5000', 'GET');
         if(rows.length > 0){
           const abiertas=getSemsAbiertas();
           const abiertosM=getMesesAbiertos();
@@ -1313,7 +1317,7 @@ async function subirDatosBase(){
     showLoading(`Subiendo actividades... ${Math.min(i+batch,data.length)}/${data.length}`);
   }
   // Reload
-  const rows = await supaFetch('actividades?order=sem.desc,ini.desc&limit=1000', 'GET');
+  const rows = await supaFetch('actividades?order=sem.desc,ini.desc&limit=5000', 'GET');
   data = rows.map(r=>({id:r.id,sem:r.sem,act:r.act,resp:r.resp,ini:r.ini,fin:r.fin,av:parseFloat(r.av)||0,est:r.est||'',notas:r.notas||[]}));
   nextId = Math.max(...data.map(r=>r.id)) + 1;
 }
