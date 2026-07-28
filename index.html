@@ -105,6 +105,7 @@ tr.r-data:hover td{background:#fafaf8}
 .p-atr{background:#fcebeb;color:#a32d2d}
 .p-sin{background:#f1efe8;color:#5f5e5a}
 .p-nd{background:#f1efe8;color:#888780}
+.p-reprg{background:#fef3e2;color:#8a4f00}
 
 /* AVANCE BAR */
 .av-w{display:flex;align-items:center;gap:5px}
@@ -264,7 +265,7 @@ tr.r-data:hover td{background:#fafaf8}
         <div class="fgi"><label>Fecha inicio *</label><input type="date" id="e-ini" onchange="calcularSemanaEditar()"></div>
         <div class="fgi"><label>Fecha fin *</label><input type="date" id="e-fin"></div>
         <div class="fgi"><label>Estado</label>
-          <select id="e-est"><option>Sin Empezar</option><option>En Proceso</option><option>Completado</option><option>Atrasado</option></select>
+          <select id="e-est"><option>Sin Empezar</option><option>En Proceso</option><option>Completado</option><option>Atrasado</option><option>Reprogramada</option></select>
         </div>
         <div class="fgi"><label>Avance (%)</label><input type="number" id="e-av" min="0" max="100"></div>
       </div>
@@ -299,7 +300,7 @@ tr.r-data:hover td{background:#fafaf8}
         <div class="fgi"><label>Fecha inicio *</label><input type="date" id="f-ini" onchange="calcularSemana()"></div>
         <div class="fgi"><label>Fecha fin *</label><input type="date" id="f-fin" onchange="calcularSemana()"></div>
         <div class="fgi"><label>Estado</label>
-          <select id="f-est"><option>Sin Empezar</option><option>En Proceso</option><option>Completado</option><option>Atrasado</option></select>
+          <select id="f-est"><option>Sin Empezar</option><option>En Proceso</option><option>Completado</option><option>Atrasado</option><option>Reprogramada</option></select>
         </div>
         <div class="fgi"><label>Avance (%)</label><input type="number" id="f-av" min="0" max="100" value="0"></div>
         <div class="fgi full"><label>Nota inicial (opcional)</label><input type="text" id="f-nota" placeholder="Ej: Pendiente confirmar con el operador"></div>
@@ -380,7 +381,7 @@ tr.r-data:hover td{background:#fafaf8}
 <script>
 
 // ── VERSIÓN ───────────────────────────────────────────────────────────────────
-const APP_VERSION = '2.7';
+const APP_VERSION = '2.8';
 
 // ── SUPABASE CONFIG ──────────────────────────────────────────────────────────
 const SUPA_URL = 'https://hfvyqrqebvndqthkjwjn.supabase.co';
@@ -645,8 +646,8 @@ let nextId = data.length;
 let panelId = null;
 let vistaActual = 'semana';
 
-const AVC = {'Completado':'#1D9E75','En Proceso':'#378ADD','Atrasado':'#E24B4A','Sin Empezar':'#B4B2A9','':'#B4B2A9'};
-const PC  = {'Completado':'p-comp','En Proceso':'p-proc','Atrasado':'p-atr','Sin Empezar':'p-sin','':'p-nd'};
+const AVC = {'Completado':'#1D9E75','En Proceso':'#378ADD','Atrasado':'#E24B4A','Sin Empezar':'#B4B2A9','Reprogramada':'#BA7517','':'#B4B2A9'};
+const PC  = {'Completado':'p-comp','En Proceso':'p-proc','Atrasado':'p-atr','Sin Empezar':'p-sin','Reprogramada':'p-reprg','':'p-nd'};
 const MES_NOMBRE = {'01':'Enero','02':'Febrero','03':'Marzo','04':'Abril','05':'Mayo','06':'Junio','07':'Julio','08':'Agosto','09':'Septiembre','10':'Octubre','11':'Noviembre','12':'Diciembre'};
 
 // ── MÉTRICAS ──────────────────────────────────────────────────────────────────
@@ -656,8 +657,9 @@ function calcM(d){
         proc=v.filter(r=>r.est==='En Proceso').length,
         atr=v.filter(r=>r.est==='Atrasado').length,
         sin=v.filter(r=>r.est==='Sin Empezar').length,
+        reprg=v.filter(r=>r.est==='Reprogramada').length,
         total=v.length;
-  return{comp,proc,atr,sin,total,pct:total?Math.round(comp/total*100):0};
+  return{comp,proc,atr,sin,reprg,total,pct:total?Math.round(comp/total*100):0};
 }
 function renderMetrics(d){
   const m=calcM(d);
@@ -666,7 +668,8 @@ function renderMetrics(d){
     <div class="metric"><div class="lbl">Completadas</div><div class="val" style="color:#1D9E75">${m.comp}</div><div class="sub">${m.pct}% del total</div></div>
     <div class="metric"><div class="lbl">En proceso</div><div class="val" style="color:#185FA5">${m.proc}</div><div class="sub">en curso</div></div>
     <div class="metric"><div class="lbl">Atrasadas</div><div class="val" style="color:#E24B4A">${m.atr}</div><div class="sub">requieren atención</div></div>
-    <div class="metric"><div class="lbl">Sin empezar</div><div class="val" style="color:#888780">${m.sin}</div><div class="sub">pendientes</div></div>`;
+    <div class="metric"><div class="lbl">Sin empezar</div><div class="val" style="color:#888780">${m.sin}</div><div class="sub">pendientes</div></div>
+    <div class="metric"><div class="lbl">Reprogramadas</div><div class="val" style="color:#BA7517">${m.reprg}</div><div class="sub">reagendadas</div></div>`;
   const p=calcM(data);
   document.getElementById('prog-pct').textContent=p.pct+'%';
   document.getElementById('prog-bar').style.width=p.pct+'%';
@@ -675,7 +678,8 @@ function renderCharts(){
   const m=calcM(data);
   document.getElementById('estado-chart').innerHTML=[
     {l:'Completado',v:m.comp,c:'#1D9E75'},{l:'En proceso',v:m.proc,c:'#378ADD'},
-    {l:'Atrasado',v:m.atr,c:'#E24B4A'},{l:'Sin empezar',v:m.sin,c:'#B4B2A9'}
+    {l:'Atrasado',v:m.atr,c:'#E24B4A'},{l:'Sin empezar',v:m.sin,c:'#B4B2A9'},
+    {l:'Reprogramada',v:m.reprg,c:'#BA7517'}
   ].map(e=>`<div class="bi"><span class="bl">${e.l}</span><div class="bt"><div class="bf" style="width:${Math.round(e.v/m.total*100)}%;background:${e.c}"></div></div><span class="bn">${e.v}</span></div>`).join('');
   // Actividades por mes - stacked bars (dinamico)
   const nombresCortos={'01':'Ene','02':'Feb','03':'Mar','04':'Abr','05':'May','06':'Jun','07':'Jul','08':'Ago','09':'Sep','10':'Oct','11':'Nov','12':'Dic'};
@@ -686,7 +690,8 @@ function renderCharts(){
     const atr=rows.filter(r=>r.est==='Atrasado').length;
     const proc=rows.filter(r=>r.est==='En Proceso').length;
     const sin=rows.filter(r=>r.est==='Sin Empezar').length;
-    return{mes,nombre:nombresCortos[mes],total:rows.length,comp,atr,proc,sin};
+    const reprg=rows.filter(r=>r.est==='Reprogramada').length;
+    return{mes,nombre:nombresCortos[mes],total:rows.length,comp,atr,proc,sin,reprg};
   }).filter(d=>d.total>0);
   const maxTotal=Math.max(...mesData.map(d=>d.total),1);
   document.getElementById('mes-chart').innerHTML=`
@@ -696,13 +701,15 @@ function renderCharts(){
         const hComp=Math.round((d.comp/d.total)*h);
         const hAtr=Math.round((d.atr/d.total)*h);
         const hProc=Math.round(((d.proc)/d.total)*h);
-        const hSin=h-hComp-hAtr-hProc;
+        const hReprg=Math.round(((d.reprg||0)/d.total)*h);
+        const hSin=h-hComp-hAtr-hProc-hReprg;
         return `<div style="flex:1;display:flex;flex-direction:column;align-items:center">
           <span style="font-size:10px;color:#9b9b98;margin-bottom:4px;height:14px;line-height:14px">${d.total}</span>
           <div style="width:100%;height:${h}px;border-radius:4px 4px 0 0;overflow:hidden;display:flex;flex-direction:column-reverse;flex-shrink:0">
             <div style="height:${hComp}px;background:#1D9E75"></div>
             <div style="height:${hProc}px;background:#378ADD"></div>
             <div style="height:${hAtr}px;background:#E24B4A"></div>
+            <div style="height:${hReprg}px;background:#BA7517"></div>
             <div style="height:${hSin}px;background:#e5e4df"></div>
           </div>
           <span style="font-size:11px;color:#6b6b68;margin-top:5px;height:16px;line-height:16px">${d.nombre}</span>
@@ -714,11 +721,13 @@ function renderCharts(){
       <span style="font-size:10px;color:#6b6b68;display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:2px;background:#378ADD;display:inline-block"></span>En proceso</span>
       <span style="font-size:10px;color:#6b6b68;display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:2px;background:#E24B4A;display:inline-block"></span>Atrasado</span>
       <span style="font-size:10px;color:#6b6b68;display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:2px;background:#e5e4df;display:inline-block"></span>Sin empezar</span>
+      <span style="font-size:10px;color:#6b6b68;display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:2px;background:#BA7517;display:inline-block"></span>Reprogramada</span>
     </div>`;
 }
 function renderBanner(d){
   const atr=d.filter(r=>r.est==='Atrasado');
   const b=document.getElementById('atr-banner');
+  const reprg=d.filter(r=>r.est==='Reprogramada');
   b.style.display=atr.length?'flex':'none';
   if(atr.length) document.getElementById('atr-msg').textContent=`${atr.length} actividad${atr.length>1?'es':''} atrasada${atr.length>1?'s':''} — haz clic en una fila roja para revisar.`;
 }
@@ -949,7 +958,7 @@ function filaHtml(r){
   const notasH=r.notas&&r.notas.length?`<span class="note-hint">💬 ${r.notas.length} nota${r.notas.length>1?'s':''}</span>`:'';
   const click=isAtr?`onclick="abrirPanel(${r.id})" title="Clic para revisar"`:'' ;
   const sel=r.est?`<select class="e-sel" onchange="cambiarEst(${r.id},this.value)" onclick="event.stopPropagation()">
-    ${['Completado','En Proceso','Atrasado','Sin Empezar'].map(e=>`<option${e===r.est?' selected':''}>${e}</option>`).join('')}
+    ${['Completado','En Proceso','Atrasado','Sin Empezar','Reprogramada'].map(e=>`<option${e===r.est?' selected':''}>${e}</option>`).join('')}
   </select>`:'<span style="color:#9b9b98;font-size:11px">—</span>';
   return `<tr class="${cls}" ${click}>
     <td style="max-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${r.act}">${r.act}${notasH}</td>
@@ -967,7 +976,7 @@ function filaHtmlConSem(r){
   const notasH=r.notas&&r.notas.length?`<span class="note-hint">💬 ${r.notas.length}</span>`:'';
   const click=isAtr?`onclick="abrirPanel(${r.id})" title="Clic para revisar"`:'' ;
   const sel=r.est?`<select class="e-sel" onchange="cambiarEst(${r.id},this.value)" onclick="event.stopPropagation()">
-    ${['Completado','En Proceso','Atrasado','Sin Empezar'].map(e=>`<option${e===r.est?' selected':''}>${e}</option>`).join('')}
+    ${['Completado','En Proceso','Atrasado','Sin Empezar','Reprogramada'].map(e=>`<option${e===r.est?' selected':''}>${e}</option>`).join('')}
   </select>`:'<span style="color:#9b9b98;font-size:11px">—</span>';
   return `<tr class="${cls}" ${click}>
     <td style="max-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${r.act}">${r.act}${notasH}</td>
