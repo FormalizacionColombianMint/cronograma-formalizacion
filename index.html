@@ -381,7 +381,7 @@ tr.r-data:hover td{background:#fafaf8}
 <script>
 
 // ── VERSIÓN ───────────────────────────────────────────────────────────────────
-const APP_VERSION = '2.8';
+const APP_VERSION = '2.9';
 
 // ── SUPABASE CONFIG ──────────────────────────────────────────────────────────
 const SUPA_URL = 'https://hfvyqrqebvndqthkjwjn.supabase.co';
@@ -666,10 +666,10 @@ function renderMetrics(d){
   document.getElementById('metrics').innerHTML=`
     <div class="metric"><div class="lbl">Total</div><div class="val">${m.total}</div><div class="sub">actividades</div></div>
     <div class="metric"><div class="lbl">Completadas</div><div class="val" style="color:#1D9E75">${m.comp}</div><div class="sub">${m.pct}% del total</div></div>
-    <div class="metric"><div class="lbl">En proceso</div><div class="val" style="color:#185FA5">${m.proc}</div><div class="sub">en curso</div></div>
-    <div class="metric"><div class="lbl">Atrasadas</div><div class="val" style="color:#E24B4A">${m.atr}</div><div class="sub">requieren atención</div></div>
-    <div class="metric"><div class="lbl">Sin empezar</div><div class="val" style="color:#888780">${m.sin}</div><div class="sub">pendientes</div></div>
-    <div class="metric"><div class="lbl">Reprogramadas</div><div class="val" style="color:#BA7517">${m.reprg}</div><div class="sub">reagendadas</div></div>`;
+    <div class="metric"><div class="lbl">En proceso</div><div class="val" style="color:#185FA5">${m.proc}</div><div class="sub">${m.total?Math.round(m.proc/m.total*100):0}% del total</div></div>
+    <div class="metric"><div class="lbl">Atrasadas</div><div class="val" style="color:#E24B4A">${m.atr}</div><div class="sub">${m.total?Math.round(m.atr/m.total*100):0}% del total</div></div>
+    <div class="metric"><div class="lbl">Sin empezar</div><div class="val" style="color:#888780">${m.sin}</div><div class="sub">${m.total?Math.round(m.sin/m.total*100):0}% del total</div></div>
+    <div class="metric"><div class="lbl">Reprogramadas</div><div class="val" style="color:#BA7517">${m.reprg}</div><div class="sub">${m.total?Math.round(m.reprg/m.total*100):0}% del total</div></div>`;
   const p=calcM(data);
   document.getElementById('prog-pct').textContent=p.pct+'%';
   document.getElementById('prog-bar').style.width=p.pct+'%';
