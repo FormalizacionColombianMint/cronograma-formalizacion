@@ -349,6 +349,20 @@ tr.r-data:hover td{background:#fafaf8}
   🆕 Hay una nueva versión de la app disponible —
   <button onclick="location.reload()" style="background:#fff;color:#534AB7;border:none;border-radius:6px;padding:4px 12px;font-size:12px;font-weight:600;cursor:pointer;margin-left:4px">Recargar página</button>
 </div>
+<!-- MODAL VER NOTAS -->
+<div class="overlay" id="ov-notas" onclick="cerrarOv(event,'ov-notas')">
+  <div class="modal" onclick="event.stopPropagation()" style="max-width:480px">
+    <div class="m-hdr">
+      <h2 id="notas-titulo">Notas</h2>
+      <button class="m-close" onclick="cerrar('ov-notas')">✕</button>
+    </div>
+    <div class="m-body" id="notas-body" style="max-height:400px;overflow-y:auto"></div>
+    <div class="m-foot">
+      <button class="btn" onclick="cerrar('ov-notas')">Cerrar</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <!-- OVERLAY REPORTE -->
@@ -381,7 +395,7 @@ tr.r-data:hover td{background:#fafaf8}
 <script>
 
 // ── VERSIÓN ───────────────────────────────────────────────────────────────────
-const APP_VERSION = '3.0';
+const APP_VERSION = '3.1';
 
 // ── SUPABASE CONFIG ──────────────────────────────────────────────────────────
 const SUPA_URL = 'https://hfvyqrqebvndqthkjwjn.supabase.co';
@@ -955,7 +969,7 @@ function filaHtml(r){
   const avP=Math.round(r.av*100),avC=AVC[r.est]||'#B4B2A9';
   const isAtr=r.est==='Atrasado';
   const cls=isAtr?'r-atr':'r-data';
-  const notasH=r.notas&&r.notas.length?`<span class="note-hint">💬 ${r.notas.length} nota${r.notas.length>1?'s':''}</span>`:'';
+  const notasH=r.notas&&r.notas.length?`<span class="note-hint" onclick="verNotas(${r.id});event.stopPropagation()" style="cursor:pointer;text-decoration:underline" title="Ver notas">💬 ${r.notas.length} nota${r.notas.length>1?'s':''}</span>`:'';
   const click=isAtr?`onclick="abrirPanel(${r.id})" title="Clic para revisar"`:'' ;
   const sel=r.est?`<select class="e-sel" onchange="cambiarEst(${r.id},this.value)" onclick="event.stopPropagation()">
     ${['Completado','En Proceso','Atrasado','Sin Empezar','Reprogramada'].map(e=>`<option${e===r.est?' selected':''}>${e}</option>`).join('')}
@@ -973,7 +987,7 @@ function filaHtmlConSem(r){
   const avP=Math.round(r.av*100),avC=AVC[r.est]||'#B4B2A9';
   const isAtr=r.est==='Atrasado';
   const cls=isAtr?'r-atr':'r-data';
-  const notasH=r.notas&&r.notas.length?`<span class="note-hint">💬 ${r.notas.length}</span>`:'';
+  const notasH=r.notas&&r.notas.length?`<span class="note-hint" onclick="verNotas(${r.id});event.stopPropagation()" style="cursor:pointer;text-decoration:underline" title="Ver notas">💬 ${r.notas.length} nota${r.notas.length>1?'s':''}</span>`:'';
   const click=isAtr?`onclick="abrirPanel(${r.id})" title="Clic para revisar"`:'' ;
   const sel=r.est?`<select class="e-sel" onchange="cambiarEst(${r.id},this.value)" onclick="event.stopPropagation()">
     ${['Completado','En Proceso','Atrasado','Sin Empezar','Reprogramada'].map(e=>`<option${e===r.est?' selected':''}>${e}</option>`).join('')}
@@ -987,6 +1001,24 @@ function filaHtmlConSem(r){
     <td><div class="av-w"><div class="av-b" id="av-bar-${r.id}"><div class="av-f" style="width:${avP}%;background:${avC}"></div></div><input type="number" min="0" max="100" value="${avP}" onchange="cambiarAv(${r.id},this.value)" onclick="event.stopPropagation()" style="width:42px;font-size:11px;border:1px solid #d3d1c7;border-radius:5px;padding:1px 4px;text-align:center;background:#fff;color:#1a1a1a;outline:none" title="Editar avance (%)"></div></td>
     <td style="white-space:nowrap">${sel}&nbsp;<button onclick="abrirEditar(${r.id});event.stopPropagation()" title="Editar actividad" style="background:none;border:none;cursor:pointer;color:#ccc;font-size:12px;padding:0;line-height:1" onmouseover="this.style.color='#185fa5'" onmouseout="this.style.color='#ccc'">✏️</button>&nbsp;<button onclick="eliminarAct(${r.id});event.stopPropagation()" title="Eliminar" style="background:none;border:none;cursor:pointer;color:#ccc;font-size:13px;padding:0;line-height:1" onmouseover="this.style.color='#e24b4a'" onmouseout="this.style.color='#ccc'">✕</button></td>
   </tr>`;
+}
+
+// ── VER NOTAS ────────────────────────────────────────────────────────────────
+function verNotas(id){
+  const r = data.find(r=>r.id===id);
+  if(!r) return;
+  document.getElementById('notas-titulo').textContent = '💬 Notas — ' + r.act.substring(0,50) + (r.act.length>50?'...':'');
+  const notas = r.notas||[];
+  if(!notas.length){
+    document.getElementById('notas-body').innerHTML = '<p style="color:#9b9b98;font-size:13px;text-align:center;padding:1rem">No hay notas para esta actividad.</p>';
+  } else {
+    document.getElementById('notas-body').innerHTML = notas.map(n=>`
+      <div style="background:#f8f7f4;border-radius:8px;padding:10px 14px;margin-bottom:8px">
+        <div style="font-size:10px;color:#b4b2a9;margin-bottom:4px">${n.fecha}</div>
+        <div style="font-size:13px;color:#1a1a1a;line-height:1.5">${n.txt}</div>
+      </div>`).join('');
+  }
+  document.getElementById('ov-notas').classList.add('active');
 }
 
 // ── EDITAR ACTIVIDAD ─────────────────────────────────────────────────────────
