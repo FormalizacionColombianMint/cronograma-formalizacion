@@ -270,6 +270,13 @@ tr.r-data:hover td{background:#fafaf8}
         <div class="fgi"><label>Avance (%)</label><input type="number" id="e-av" min="0" max="100"></div>
       </div>
       <p class="f-err" id="e-err"></p>
+      <!-- Notas existentes -->
+      <div id="e-notas-section" style="margin-top:1rem">
+        <div style="font-size:11px;font-weight:600;color:#444;margin-bottom:6px">Notas existentes</div>
+        <div id="e-notas-list"></div>
+        <div style="font-size:11px;font-weight:600;color:#444;margin-top:10px;margin-bottom:4px">Agregar nueva nota</div>
+        <input type="text" id="e-nota-nueva" placeholder="Escribe una nota..." style="width:100%;font-size:13px;padding:7px 10px;border-radius:8px;border:1px solid #d3d1c7;outline:none">
+      </div>
     </div>
     <div class="m-foot">
       <button class="btn" onclick="cerrar('ov-editar')">Cancelar</button>
@@ -395,7 +402,7 @@ tr.r-data:hover td{background:#fafaf8}
 <script>
 
 // ── VERSIÓN ───────────────────────────────────────────────────────────────────
-const APP_VERSION = '3.1';
+const APP_VERSION = '3.2';
 
 // ── SUPABASE CONFIG ──────────────────────────────────────────────────────────
 const SUPA_URL = 'https://hfvyqrqebvndqthkjwjn.supabase.co';
@@ -1040,7 +1047,43 @@ function abrirEditar(id){
   document.getElementById('e-est').value = r.est||'Sin Empezar';
   document.getElementById('e-av').value = Math.round(r.av*100);
   document.getElementById('e-err').style.display='none';
+  document.getElementById('e-nota-nueva').value='';
+  // Render existing notes
+  const notas = r.notas||[];
+  const listaEl = document.getElementById('e-notas-list');
+  if(notas.length){
+    listaEl.innerHTML = notas.map((n,i)=>`
+      <div style="background:#f8f7f4;border-radius:8px;padding:8px 12px;margin-bottom:6px;display:flex;align-items:flex-start;gap:8px">
+        <div style="flex:1">
+          <div style="font-size:10px;color:#b4b2a9;margin-bottom:2px">${n.fecha}</div>
+          <div style="font-size:12px;color:#1a1a1a" id="nota-txt-${i}">${n.txt}</div>
+        </div>
+        <button onclick="borrarNota(${r.id},${i})" title="Borrar nota" style="background:none;border:none;cursor:pointer;color:#ccc;font-size:14px;padding:0;flex-shrink:0" onmouseover="this.style.color='#e24b4a'" onmouseout="this.style.color='#ccc'">✕</button>
+      </div>`).join('');
+  } else {
+    listaEl.innerHTML = '<p style="font-size:12px;color:#9b9b98;margin-bottom:6px">Sin notas aún.</p>';
+  }
   document.getElementById('ov-editar').classList.add('active');
+}
+
+function borrarNota(id, idx){
+  const r = data.find(r=>r.id===id);
+  if(!r||!r.notas) return;
+  r.notas.splice(idx, 1);
+  // Re-render notes list
+  const listaEl = document.getElementById('e-notas-list');
+  if(r.notas.length){
+    listaEl.innerHTML = r.notas.map((n,i)=>`
+      <div style="background:#f8f7f4;border-radius:8px;padding:8px 12px;margin-bottom:6px;display:flex;align-items:flex-start;gap:8px">
+        <div style="flex:1">
+          <div style="font-size:10px;color:#b4b2a9;margin-bottom:2px">${n.fecha}</div>
+          <div style="font-size:12px;color:#1a1a1a">${n.txt}</div>
+        </div>
+        <button onclick="borrarNota(${id},${i})" title="Borrar nota" style="background:none;border:none;cursor:pointer;color:#ccc;font-size:14px;padding:0;flex-shrink:0" onmouseover="this.style.color='#e24b4a'" onmouseout="this.style.color='#ccc'">✕</button>
+      </div>`).join('');
+  } else {
+    listaEl.innerHTML = '<p style="font-size:12px;color:#9b9b98;margin-bottom:6px">Sin notas aún.</p>';
+  }
 }
 
 async function guardarEdicion(){
@@ -1061,6 +1104,12 @@ async function guardarEdicion(){
   const r = data.find(r=>r.id===id);
   if(!r) return;
   r.act=act; r.resp=resp; r.sem=sem; r.ini=ini; r.fin=fin; r.est=est; r.av=av;
+  // Add new note if written
+  const notaNueva = document.getElementById('e-nota-nueva').value.trim();
+  if(notaNueva){
+    if(!r.notas) r.notas=[];
+    r.notas.push({fecha:new Date().toLocaleString('es-CO',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}),txt:notaNueva});
+  }
   data.sort((a,b)=>b.sem-a.sem||b.ini.localeCompare(a.ini));
   cerrar('ov-editar');
   const abiertas=getSemsAbiertas();
