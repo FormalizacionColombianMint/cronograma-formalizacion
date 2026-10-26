@@ -166,6 +166,14 @@ tr.r-data:hover td{background:#fafaf8}
 
 .version-banner{display:none;position:fixed;top:0;left:0;right:0;background:#534AB7;color:#fff;text-align:center;padding:10px 16px;font-size:13px;font-weight:500;z-index:300;align-items:center;justify-content:center;gap:12px}
 .version-banner.show{display:flex}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-size:12px;padding:5px 11px;border-radius:20px;border:1px solid #d3d1c7;background:#fff;color:#444;cursor:pointer;user-select:none;line-height:1.2}
+.chip:hover{border-color:#1D9E75}
+.chip.on{background:#1D9E75;border-color:#1D9E75;color:#fff}
+.chip.all.on{background:#185fa5;border-color:#185fa5}
+.mrow{display:flex;align-items:center;justify-content:space-between;background:#f8f7f4;border-radius:8px;padding:8px 12px;margin-bottom:6px;font-size:13px}
+.mrow button{background:none;border:none;cursor:pointer;color:#ccc;font-size:14px;padding:0 2px}
+.mrow button:hover{color:#e24b4a}
 .toast{position:fixed;bottom:1.5rem;right:1.5rem;background:#1D9E75;color:#fff;padding:9px 16px;border-radius:10px;font-size:13px;font-weight:500;z-index:200;opacity:0;transition:opacity .3s;pointer-events:none}
 .toast.show{opacity:1}
 .footer{margin-top:1.5rem;text-align:center;font-size:12px;color:#b4b2a9;padding-bottom:1rem}
@@ -212,6 +220,7 @@ tr.r-data:hover td{background:#fafaf8}
     <button class="btn btn-blue" onclick="exportarCSV()">⬇ Exportar CSV</button>
     <button class="btn" onclick="abrirReporte()" style="border-color:#BA7517;color:#BA7517" title="Generar reporte PDF de una semana">📄 Reporte PDF</button>
     <button class="btn" onclick="guardarHTML()" style="border-color:#534AB7;color:#534AB7" title="Sincronizar todos los cambios con Supabase">☁️ Sincronizar</button>
+    <button class="btn" onclick="abrirMiembros()" style="border-color:#2e7d6b;color:#2e7d6b" title="Agregar o quitar miembros del equipo">👥 Miembros</button>
     <button class="btn btn-green" onclick="abrirFormNueva()">+ Nueva actividad</button>
   </div>
 </div>
@@ -250,16 +259,7 @@ tr.r-data:hover td{background:#fafaf8}
       <div class="fg">
         <div class="fgi full"><label>Descripción *</label><textarea id="e-act" rows="2"></textarea></div>
         <div class="fgi"><label>Responsable *</label>
-          <select id="e-resp">
-            <option value="">Seleccionar…</option>
-            <option>Catalina Valencia</option><option>Juanita David</option><option>Cristian Rojas</option>
-            <option>Sebastian Ceballos</option><option>Walter Guzmán</option><option>Todo el grupo</option>
-            <option>Juanita - Sebastian</option><option>Catalina - Cristian</option><option>Walter - Juanita</option>
-            <option>Walter - Catalina - Cristian</option><option>Cristian - Sebastian - Juanita</option>
-            <option>Cristian - Sebastian</option><option>Walter - Sebastian</option><option>Walter - Cristian</option>
-            <option>Walter - Sebastian - Juanita</option><option>Catalina - Walter</option><option>Catalina - Juanita</option>
-            <option>Walter - Cristian - Sebastian</option><option>Sebastian-Cristian-Catalina</option>
-          </select>
+          <div class="chips" id="e-resp-chips"></div><input type="hidden" id="e-resp">
         </div>
         <div class="fgi"><label>Semana *</label><input type="number" id="e-sem" min="1" max="52"></div>
         <div class="fgi"><label>Fecha inicio *</label><input type="date" id="e-ini" onchange="calcularSemanaEditar()"></div>
@@ -293,15 +293,7 @@ tr.r-data:hover td{background:#fafaf8}
       <div class="fg">
         <div class="fgi full"><label>Descripción *</label><textarea id="f-act" rows="2" placeholder="Ej: Visita Mina El Escorpión - toma de muestras"></textarea></div>
         <div class="fgi"><label>Responsable *</label>
-          <select id="f-resp"><option value="">Seleccionar…</option>
-            <option>Catalina Valencia</option><option>Juanita David</option><option>Cristian Rojas</option>
-            <option>Sebastian Ceballos</option><option>Walter Guzmán</option><option>Todo el grupo</option>
-            <option>Juanita - Sebastian</option><option>Catalina - Cristian</option><option>Walter - Juanita</option>
-            <option>Walter - Catalina - Cristian</option><option>Cristian - Sebastian - Juanita</option>
-            <option>Cristian - Sebastian</option><option>Walter - Sebastian</option><option>Walter - Cristian</option>
-            <option>Walter - Sebastian - Juanita</option><option>Catalina - Walter</option><option>Catalina - Juanita</option>
-            <option>Walter - Cristian - Sebastian</option><option>Sebastian-Cristian-Catalina</option>
-          </select>
+          <div class="chips" id="f-resp-chips"></div><input type="hidden" id="f-resp">
         </div>
         <div class="fgi"><label>Semana *</label><input type="number" id="f-sem" min="1" max="52" placeholder="Ej: 26"></div>
         <div class="fgi"><label>Fecha inicio *</label><input type="date" id="f-ini" onchange="calcularSemana()"></div>
@@ -370,6 +362,23 @@ tr.r-data:hover td{background:#fafaf8}
   </div>
 </div>
 
+<!-- MODAL MIEMBROS -->
+<div class="overlay" id="ov-miembros" onclick="cerrarOv(event,'ov-miembros')">
+  <div class="modal" onclick="event.stopPropagation()" style="max-width:440px">
+    <div class="m-hdr"><h2>👥 Miembros del equipo</h2><button class="m-close" onclick="cerrar('ov-miembros')">✕</button></div>
+    <div class="m-body">
+      <div id="miembros-aviso" style="display:none;background:#fef3e2;color:#8a4f00;border-radius:8px;padding:8px 12px;font-size:12px;margin-bottom:10px"></div>
+      <div id="miembros-lista" style="max-height:300px;overflow-y:auto"></div>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <input type="text" id="m-nuevo" placeholder="Nombre y apellido" onkeydown="if(event.key==='Enter')agregarMiembro()" style="flex:1;font-size:13px;padding:7px 10px;border-radius:8px;border:1px solid #d3d1c7;outline:none">
+        <button class="btn btn-green" onclick="agregarMiembro()">+ Agregar</button>
+      </div>
+      <p style="font-size:11px;color:#9b9b98;margin-top:10px">Quitar a un miembro no borra sus actividades anteriores; solo deja de aparecer como opción.</p>
+    </div>
+    <div class="m-foot"><button class="btn" onclick="cerrar('ov-miembros')">Cerrar</button></div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <!-- OVERLAY REPORTE -->
@@ -402,7 +411,7 @@ tr.r-data:hover td{background:#fafaf8}
 <script>
 
 // ── VERSIÓN ───────────────────────────────────────────────────────────────────
-const APP_VERSION = '3.2';
+const APP_VERSION = '3.3';
 
 // ── SUPABASE CONFIG ──────────────────────────────────────────────────────────
 const SUPA_URL = 'https://hfvyqrqebvndqthkjwjn.supabase.co';
@@ -1028,6 +1037,125 @@ function verNotas(id){
   document.getElementById('ov-notas').classList.add('active');
 }
 
+// ── MIEMBROS ─────────────────────────────────────────────────────────────────
+const MIEMBROS_DEFAULT=['Catalina Valencia','Cristian Rojas','Juanita David','Sebastian Ceballos','Walter Guzmán'];
+let miembros = MIEMBROS_DEFAULT.map(n=>({id:null,nombre:n}));
+let miembrosOnline = false;
+const chipSel = {f:new Set(), e:new Set()};
+
+function escAttr(s){return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function firstName(n){return n.split(' ')[0];}
+
+async function cargarMiembros(){
+  try{
+    const rows = await supaFetch('miembros?order=nombre.asc&limit=500','GET');
+    if(Array.isArray(rows)){
+      miembros = rows.map(r=>({id:r.id,nombre:r.nombre}));
+      miembrosOnline = true;
+    }
+  }catch(e){ miembrosOnline = false; }
+  if(document.getElementById('ov-miembros').classList.contains('active')) renderMiembros();
+  refrescarChipsAbiertos();
+}
+
+function respFromSet(set){
+  const sel=[...set];
+  if(!sel.length) return '';
+  if(sel.length===1) return sel[0];
+  const todos = miembros.length>0 && miembros.every(m=>set.has(m.nombre)) && sel.length===miembros.length;
+  if(todos) return 'Todo el grupo';
+  const orden=[...miembros.map(m=>m.nombre).filter(n=>set.has(n)), ...sel.filter(n=>!miembros.some(m=>m.nombre===n))];
+  return orden.map(firstName).join(' - ');
+}
+function setFromResp(resp){
+  const set=new Set();
+  if(!resp) return set;
+  const r=resp.trim();
+  if(/^todo el grupo$/i.test(r)){ miembros.forEach(m=>set.add(m.nombre)); return set; }
+  const completo=miembros.find(m=>m.nombre.toLowerCase()===r.toLowerCase());
+  if(completo){ set.add(completo.nombre); return set; }
+  r.split(/\s*-\s*/).map(t=>t.trim()).filter(Boolean).forEach(t=>{
+    const m=miembros.find(m=>m.nombre.toLowerCase()===t.toLowerCase()) || miembros.find(m=>firstName(m.nombre).toLowerCase()===t.toLowerCase());
+    set.add(m?m.nombre:t);
+  });
+  return set;
+}
+function renderChips(p){
+  const box=document.getElementById(p+'-resp-chips');
+  if(!box) return;
+  const set=chipSel[p];
+  const legacy=[...set].filter(n=>!miembros.some(m=>m.nombre===n));
+  const todosOn = miembros.length>0 && miembros.every(m=>set.has(m.nombre));
+  box.innerHTML = '<span class="chip all'+(todosOn?' on':'')+'" data-all="1">Todo el grupo</span>' +
+    [...miembros.map(m=>m.nombre), ...legacy].map(n=>'<span class="chip'+(set.has(n)?' on':'')+'" data-n="'+escAttr(n)+'">'+escAttr(n)+'</span>').join('');
+  box.onclick=function(e){
+    const c=e.target.closest('.chip'); if(!c) return;
+    toggleChip(p, c.dataset.n, !!c.dataset.all);
+  };
+}
+function toggleChip(p,n,isAll){
+  const set=chipSel[p];
+  if(isAll){
+    const todosOn=miembros.every(m=>set.has(m.nombre));
+    miembros.forEach(m=>{ if(todosOn) set.delete(m.nombre); else set.add(m.nombre); });
+  } else if(set.has(n)) set.delete(n); else set.add(n);
+  document.getElementById(p+'-resp').value=respFromSet(set);
+  renderChips(p);
+}
+function initChips(p,resp){
+  chipSel[p]=setFromResp(resp);
+  document.getElementById(p+'-resp').value=resp||'';
+  renderChips(p);
+}
+function refrescarChipsAbiertos(){
+  if(document.getElementById('ov-form').classList.contains('active')) renderChips('f');
+  if(document.getElementById('ov-editar').classList.contains('active')) renderChips('e');
+}
+
+function abrirMiembros(){
+  document.getElementById('m-nuevo').value='';
+  renderMiembros();
+  document.getElementById('ov-miembros').classList.add('active');
+}
+function renderMiembros(){
+  const av=document.getElementById('miembros-aviso');
+  if(!miembrosOnline){
+    av.style.display='block';
+    av.textContent='Aún no existe la tabla "miembros" en Supabase (ejecuta supabase_miembros.sql). Mientras tanto se muestra la lista por defecto y no se pueden guardar cambios.';
+  } else av.style.display='none';
+  const lista=document.getElementById('miembros-lista');
+  lista.innerHTML = miembros.length
+    ? miembros.map((m,i)=>'<div class="mrow"><span>'+escAttr(m.nombre)+'</span><button title="Quitar" onclick="quitarMiembro('+i+')">✕</button></div>').join('')
+    : '<p style="font-size:12px;color:#9b9b98;text-align:center;padding:.5rem">No hay miembros. Agrega el primero abajo.</p>';
+}
+async function agregarMiembro(){
+  const inp=document.getElementById('m-nuevo');
+  const nombre=inp.value.trim().replace(/\s+/g,' ');
+  if(!nombre) return;
+  if(miembros.some(m=>m.nombre.toLowerCase()===nombre.toLowerCase())){ toast('Ese miembro ya está en la lista'); return; }
+  try{
+    const res=await supaFetch('miembros','POST',[{nombre}],'return=representation');
+    const n=Array.isArray(res)?res[0]:res;
+    miembros.push({id:n.id,nombre});
+    miembros.sort((a,b)=>a.nombre.localeCompare(b.nombre,'es'));
+    miembrosOnline=true;
+    inp.value='';
+    renderMiembros(); refrescarChipsAbiertos();
+    toast('Miembro agregado ✓');
+  }catch(e){ toast('⚠️ No se pudo guardar. ¿Ya creaste la tabla miembros en Supabase?'); }
+}
+async function quitarMiembro(i){
+  const m=miembros[i]; if(!m) return;
+  if(!confirm('¿Quitar a '+m.nombre+' del equipo?\nLas actividades ya registradas conservan su nombre.')) return;
+  try{
+    if(m.id==null) throw new Error('sin tabla');
+    await supaFetch('miembros?id=eq.'+m.id,'DELETE',null,'return=minimal');
+    miembros.splice(i,1);
+    renderMiembros(); refrescarChipsAbiertos();
+    toast('Miembro quitado');
+  }catch(e){ toast('⚠️ No se pudo quitar. ¿Ya creaste la tabla miembros en Supabase?'); }
+}
+
 // ── EDITAR ACTIVIDAD ─────────────────────────────────────────────────────────
 function calcularSemanaEditar(){
   const ini = document.getElementById('e-ini').value;
@@ -1041,6 +1169,7 @@ function abrirEditar(id){
   document.getElementById('e-id').value = id;
   document.getElementById('e-act').value = r.act;
   document.getElementById('e-resp').value = r.resp;
+  initChips('e', r.resp);
   document.getElementById('e-sem').value = r.sem;
   document.getElementById('e-ini').value = r.ini;
   document.getElementById('e-fin').value = r.fin;
@@ -1211,6 +1340,7 @@ function abrirFormNueva(){
   ['f-act','f-resp','f-sem','f-ini','f-fin','f-nota'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('f-est').value='Sin Empezar';
   document.getElementById('f-av').value='0';
+  initChips('f','');
   document.getElementById('f-err').style.display='none';
   document.getElementById('ov-form').classList.add('active');
 }
@@ -1372,6 +1502,7 @@ async function cargarDatos(){
       showLoading('Primera carga — subiendo ' + data.length + ' actividades...');
       await subirDatosBase();
     }
+    await cargarMiembros();
     initUI();
     // Auto-refresh cada 30 segundos
     setInterval(async()=>{
@@ -1386,6 +1517,7 @@ async function cargarDatos(){
           if(vistaActual==='semana') reabrirSems(abiertas);
           if(vistaActual==='mes') reabrirMeses(abiertosM);
           actualizarSubtitulo();
+          cargarMiembros();
         }
       }catch(e){ console.log('Auto-refresh error:', e.message); }
     }, 30000);
